@@ -3,9 +3,10 @@ mod literal;
 
 pub use argument::*;
 pub use literal::*;
-use nom::{IResult, branch::alt};
+use nom::branch::alt;
+use nom::IResult;
 
-use crate::{Execute, CommandError, Propagate};
+use crate::{CommandError, Execute, Propagate};
 
 pub struct ThenWrapper<E1, E2> {
     pub(crate) first: E1,

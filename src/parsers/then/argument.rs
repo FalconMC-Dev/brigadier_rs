@@ -1,10 +1,12 @@
 use std::marker::PhantomData;
 
-use nom::{IResult, character::complete::char, branch::alt, error::{FromExternalError, ErrorKind}};
-
-use crate::{CommandArgument, CommandError, BuildExecute, TaskLogic, BuildPropagate, Execute, Propagate, Then};
+use nom::branch::alt;
+use nom::character::complete::char;
+use nom::error::{ErrorKind, FromExternalError};
+use nom::IResult;
 
 use super::ThenWrapper;
+use crate::{BuildExecute, BuildPropagate, CommandArgument, CommandError, Execute, Propagate, TaskLogic, Then};
 
 pub struct CommandThen<A, E, O> {
     pub(crate) argument: A,
@@ -16,9 +18,7 @@ impl<A, E, O> CommandArgument<O> for CommandThen<A, E, O>
 where
     A: CommandArgument<O>,
 {
-    fn parse<'a>(&self, input: &'a str) -> IResult<&'a str, O, CommandError<'a>> {
-        self.argument.parse(input)
-    }
+    fn parse<'a>(&self, input: &'a str) -> IResult<&'a str, O, CommandError<'a>> { self.argument.parse(input) }
 }
 
 impl<A, E, O, C> BuildExecute<C, ThenExecutor<A, E, C, O>> for CommandThen<A, E, O>
@@ -109,7 +109,7 @@ where
                 let (input, result) = self.argument.parse(i)?;
                 match self.task.run(result) {
                     Err(e) => Err(nom::Err::Failure(CommandError::from_external_error(input, ErrorKind::MapRes, e))),
-                    Ok(v) => Ok((input, v))
+                    Ok(v) => Ok((input, v)),
                 }
             },
         ))(input)
@@ -134,7 +134,7 @@ where
                 let (input, result) = self.argument.parse(i)?;
                 match self.task.run((data, result)) {
                     Err(e) => Err(nom::Err::Failure(CommandError::from_external_error(input, ErrorKind::MapRes, e))),
-                    Ok(v) => Ok((input, v))
+                    Ok(v) => Ok((input, v)),
                 }
             },
         ))(input)

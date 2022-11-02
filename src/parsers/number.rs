@@ -1,10 +1,15 @@
 use std::marker::PhantomData;
 
-use nom::{IResult, character::complete::char, combinator::{map_res, recognize, opt}, sequence::{preceded, terminated, separated_pair}, bytes::complete::tag, multi::{many1, many0}, character::complete::one_of};
-
-use crate::{CommandError, CommandArgument, error::CmdErrorKind, Then, ArgumentMarkerDefaultImpl};
+use nom::bytes::complete::tag;
+use nom::character::complete::{char, one_of};
+use nom::combinator::{map_res, opt, recognize};
+use nom::multi::{many0, many1};
+use nom::sequence::{preceded, separated_pair, terminated};
+use nom::IResult;
 
 use super::CommandThen;
+use crate::error::CmdErrorKind;
+use crate::{ArgumentMarkerDefaultImpl, CommandArgument, CommandError, Then};
 
 pub struct IntegerArgument<N> {
     pub(crate) min: N,
@@ -34,15 +39,12 @@ where
     N: PartialOrd,
 {
     fn parse<'a>(&self, input: &'a str) -> nom::IResult<&'a str, N, CommandError<'a>> {
-        map_res(
-            self.parse,
-            |out| {
-                if out > self.max || out < self.min {
-                    return Err(CmdErrorKind::OutOfBounds);
-                }
-                Ok(out)
+        map_res(self.parse, |out| {
+            if out > self.max || out < self.min {
+                return Err(CmdErrorKind::OutOfBounds);
             }
-        )(input)
+            Ok(out)
+        })(input)
     }
 }
 
@@ -61,27 +63,18 @@ impl<E, N> Then<E> for IntegerArgument<N> {
 impl<N> ArgumentMarkerDefaultImpl for IntegerArgument<N> {}
 
 fn decimal(input: &str) -> IResult<&str, &str, CommandError> {
-    recognize(
-        preceded(
-            opt(tag("-")),
-            many1(
-                terminated(one_of("0123456789"), many0(char('_')))
-            )
-        )
-    )(input)
+    recognize(preceded(opt(tag("-")), many1(terminated(one_of("0123456789"), many0(char('_'))))))(input)
 }
 
 fn float(input: &str) -> IResult<&str, &str, CommandError> {
-    recognize(
-        preceded(
-            opt(tag("-")),
-            separated_pair(
-                many1(terminated(one_of("0123456789"), many0(char('_')))),
-                opt(char('.')),
-                opt(many1(terminated(one_of("0123456789"), many0(char('_'))))),
-            )
-        )
-    )(input)
+    recognize(preceded(
+        opt(tag("-")),
+        separated_pair(
+            many1(terminated(one_of("0123456789"), many0(char('_')))),
+            opt(char('.')),
+            opt(many1(terminated(one_of("0123456789"), many0(char('_'))))),
+        ),
+    ))(input)
 }
 
 macro_rules! impl_num {

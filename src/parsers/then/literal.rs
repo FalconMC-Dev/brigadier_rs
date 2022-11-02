@@ -1,8 +1,10 @@
-use nom::{IResult, character::complete::char, branch::alt, error::{ErrorKind, FromExternalError}};
-
-use crate::{CommandArgument, CommandError, BuildExecute, BuildPropagate, TaskLogicNoArgs, TaskLogic, Execute, Propagate, Then};
+use nom::branch::alt;
+use nom::character::complete::char;
+use nom::error::{ErrorKind, FromExternalError};
+use nom::IResult;
 
 use super::ThenWrapper;
+use crate::{BuildExecute, BuildPropagate, CommandArgument, CommandError, Execute, Propagate, TaskLogic, TaskLogicNoArgs, Then};
 
 pub struct LiteralThen<A, E> {
     pub(crate) argument: A,
@@ -13,9 +15,7 @@ impl<A, E> CommandArgument<()> for LiteralThen<A, E>
 where
     A: CommandArgument<()>,
 {
-    fn parse<'a>(&self, input: &'a str) -> IResult<&'a str, (), CommandError<'a>> {
-        self.argument.parse(input)
-    }
+    fn parse<'a>(&self, input: &'a str) -> IResult<&'a str, (), CommandError<'a>> { self.argument.parse(input) }
 }
 
 impl<A, E, C> BuildExecute<C, LiteralThenExecutor<A, E, C>> for LiteralThen<A, E>
@@ -105,7 +105,7 @@ where
                 let (input, _) = self.argument.parse(i)?;
                 match self.task.run() {
                     Err(e) => Err(nom::Err::Failure(CommandError::from_external_error(input, ErrorKind::MapRes, e))),
-                    Ok(v) => Ok((input, v))
+                    Ok(v) => Ok((input, v)),
                 }
             },
         ))(input)
@@ -130,7 +130,7 @@ where
                 let (input, _) = self.argument.parse(i)?;
                 match self.task.run(data) {
                     Err(e) => Err(nom::Err::Failure(CommandError::from_external_error(input, ErrorKind::MapRes, e))),
-                    Ok(v) => Ok((input, v))
+                    Ok(v) => Ok((input, v)),
                 }
             },
         ))(input)

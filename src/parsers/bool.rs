@@ -1,15 +1,13 @@
 use std::marker::PhantomData;
 
-use nom::{branch::alt, bytes::complete::tag_no_case};
-
-use crate::{CommandArgument, CommandError, ArgumentMarkerDefaultImpl, Then};
+use nom::branch::alt;
+use nom::bytes::complete::tag_no_case;
 
 use super::CommandThen;
+use crate::{ArgumentMarkerDefaultImpl, CommandArgument, CommandError, Then};
 
 #[doc(hidden)]
-pub fn boolean() -> BoolArgument {
-    BoolArgument
-}
+pub fn boolean() -> BoolArgument { BoolArgument }
 
 pub struct BoolArgument;
 
@@ -23,7 +21,7 @@ impl CommandArgument<bool> for BoolArgument {
             |i| {
                 let (i, _) = tag_no_case("false")(i)?;
                 Ok((i, false))
-            }
+            },
         ))(input)
     }
 }

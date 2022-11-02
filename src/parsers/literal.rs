@@ -1,12 +1,11 @@
-use nom::{IResult, bytes::complete::tag_no_case, error::{ErrorKind, FromExternalError}};
-
-use crate::{CommandArgument, CommandError, Then, BuildExecute, TaskLogicNoArgs, BuildPropagate, TaskLogic, Execute, Propagate};
+use nom::bytes::complete::tag_no_case;
+use nom::error::{ErrorKind, FromExternalError};
+use nom::IResult;
 
 use super::LiteralThen;
+use crate::{BuildExecute, BuildPropagate, CommandArgument, CommandError, Execute, Propagate, TaskLogic, TaskLogicNoArgs, Then};
 
-pub fn literal(literal: &'static str) -> LiteralArgument {
-    LiteralArgument { literal, }
-}
+pub fn literal(literal: &'static str) -> LiteralArgument { LiteralArgument { literal } }
 
 pub struct LiteralArgument {
     literal: &'static str,
@@ -68,7 +67,7 @@ where
         let (input, _) = self.argument.parse(input)?;
         match self.task.run() {
             Err(e) => Err(nom::Err::Failure(CommandError::from_external_error(input, ErrorKind::MapRes, e))),
-            Ok(v) => Ok((input, v))
+            Ok(v) => Ok((input, v)),
         }
     }
 }
@@ -83,7 +82,7 @@ where
         let (input, _) = self.argument.parse(input)?;
         match self.task.run(data) {
             Err(e) => Err(nom::Err::Failure(CommandError::from_external_error(input, ErrorKind::MapRes, e))),
-            Ok(v) => Ok((input, v))
+            Ok(v) => Ok((input, v)),
         }
     }
 }

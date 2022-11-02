@@ -1,10 +1,11 @@
 use std::marker::PhantomData;
 
-use nom::{IResult, error::{FromExternalError, ErrorKind}};
+use nom::error::{ErrorKind, FromExternalError};
+use nom::IResult;
 
-use crate::{CommandError, parsers::DefaultExecutor};
-
-use super::{BuildExecute, ArgumentMarkerDefaultImpl, CommandArgument, BuildPropagate, TaskLogic, Execute, Propagate, TaskLogicNoArgs};
+use super::{ArgumentMarkerDefaultImpl, BuildExecute, BuildPropagate, CommandArgument, Execute, Propagate, TaskLogic, TaskLogicNoArgs};
+use crate::parsers::DefaultExecutor;
+use crate::CommandError;
 
 impl<A, O, C> BuildExecute<C, DefaultExecutor<A, C, O>> for A
 where
@@ -43,7 +44,7 @@ where
         let (input, result) = self.argument.parse(input)?;
         match self.task.run(result) {
             Err(e) => Err(nom::Err::Failure(CommandError::from_external_error(input, ErrorKind::MapRes, e))),
-            Ok(v) => Ok((input, v))
+            Ok(v) => Ok((input, v)),
         }
     }
 }
@@ -58,7 +59,7 @@ where
         let (input, result) = self.argument.parse(input)?;
         match self.task.run((data, result)) {
             Err(e) => Err(nom::Err::Failure(CommandError::from_external_error(input, ErrorKind::MapRes, e))),
-            Ok(v) => Ok((input, v))
+            Ok(v) => Ok((input, v)),
         }
     }
 }
@@ -70,9 +71,7 @@ where
 {
     type Error = E;
 
-    fn run(&self, args: O) -> Result<bool, E> {
-        self(args)
-    }
+    fn run(&self, args: O) -> Result<bool, E> { self(args) }
 }
 
 impl<E, F> TaskLogicNoArgs for F
@@ -82,7 +81,5 @@ where
 {
     type Error = E;
 
-    fn run(&self) -> Result<bool, Self::Error> {
-        self()
-    }
+    fn run(&self) -> Result<bool, Self::Error> { self() }
 }
