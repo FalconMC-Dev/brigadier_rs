@@ -1,0 +1,18 @@
+[package]
+name = "brigadier_rs"
+version = "0.0.1"
+edition = "2021"
+authors = ["GrizzlT"]
+description = "Minecraft command parser in Rust"
+readme = "README.md"
+repository = "https://github.com/FalconMC-Dev/brigadier_rs"
+license = "MIT OR Apache-2.0"
+keywords = ["brigadier", "command", "minecraft", "parsing"]
+categories = ["parser-implementations"]
+exclude = [".github/*", "rustfmt.toml"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+nom = "7.1.1"
+anyhow = "1.0.66"
