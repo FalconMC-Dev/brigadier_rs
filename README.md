@@ -1,5 +1,7 @@
 # brigadier-rs
 
+[![Latest Version](https://img.shields.io/crates/v/brigadier_rs)](https://crates.io/crates/brigadier_rs)
+
 This crate is a parsing library for Minecraft commands inspired
 by [Mojang's brigadier](https://github.com/Mojang/Brigadier). It was developed
 for use with [`FalconMC`](https://github.com/FalconMC-Dev/FalconMC) but can
