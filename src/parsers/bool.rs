@@ -6,9 +6,13 @@ use nom::bytes::complete::tag_no_case;
 use super::CommandThen;
 use crate::{ArgumentMarkerDefaultImpl, CommandArgument, CommandError, Then};
 
-#[doc(hidden)]
+/// Create a boolean parser
 pub fn boolean() -> BoolArgument { BoolArgument }
 
+/// Boolean argument parser.
+///
+/// This parser has no fields because it simply parses either `"true"` or
+/// `"false`".
 pub struct BoolArgument;
 
 impl CommandArgument<bool> for BoolArgument {

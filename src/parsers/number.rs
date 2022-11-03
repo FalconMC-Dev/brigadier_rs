@@ -11,22 +11,28 @@ use super::CommandThen;
 use crate::error::CmdErrorKind;
 use crate::{ArgumentMarkerDefaultImpl, CommandArgument, CommandError, Then};
 
-pub struct IntegerArgument<N> {
+/// Numeric argument parser.
+///
+/// This type can be bounded between a minimum and maximum value (standard MIN
+/// and MAX of type `N`). A parse method for type `N` must be provided also.
+pub struct NumberArgument<N> {
     pub(crate) min: N,
     pub(crate) max: N,
     pub(crate) parse: fn(&str) -> IResult<&str, N, CommandError>,
 }
 
-impl<N> IntegerArgument<N>
+impl<N> NumberArgument<N>
 where
     N: PartialOrd,
 {
+    /// Set a minimum value for this argument (inclusive).
     pub fn min(mut self, min: N) -> Self {
         debug_assert!(self.max >= min);
         self.min = min;
         self
     }
 
+    /// Set a maximum value for this argument (inclusive).
     pub fn max(mut self, max: N) -> Self {
         debug_assert!(self.min <= max);
         self.max = max;
@@ -34,7 +40,7 @@ where
     }
 }
 
-impl<N> CommandArgument<N> for IntegerArgument<N>
+impl<N> CommandArgument<N> for NumberArgument<N>
 where
     N: PartialOrd,
 {
@@ -48,7 +54,7 @@ where
     }
 }
 
-impl<E, N> Then<E> for IntegerArgument<N> {
+impl<E, N> Then<E> for NumberArgument<N> {
     type Output = CommandThen<Self, E, N>;
 
     fn then(self, executor: E) -> Self::Output {
@@ -60,7 +66,7 @@ impl<E, N> Then<E> for IntegerArgument<N> {
     }
 }
 
-impl<N> ArgumentMarkerDefaultImpl for IntegerArgument<N> {}
+impl<N> ArgumentMarkerDefaultImpl for NumberArgument<N> {}
 
 fn decimal(input: &str) -> IResult<&str, &str, CommandError> {
     recognize(preceded(opt(tag("-")), many1(terminated(one_of("0123456789"), many0(char('_'))))))(input)
@@ -82,8 +88,9 @@ macro_rules! impl_num {
         impl_num!($num => $name = $parse + decimal);
     };
     ($num:ty => $name:ident = $parse:ident + $num_parse:ident) => {
-        pub fn $name() -> IntegerArgument<$num> {
-            IntegerArgument {
+        #[doc = stringify!(Create a $num argument parser.)]
+        pub fn $name() -> NumberArgument<$num> {
+            NumberArgument {
                 min: <$num>::MIN,
                 max: <$num>::MAX,
                 parse: $parse,

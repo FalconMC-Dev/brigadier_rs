@@ -6,6 +6,7 @@ use nom::IResult;
 use super::ThenWrapper;
 use crate::{BuildExecute, BuildPropagate, CommandArgument, CommandError, Execute, Propagate, TaskLogic, TaskLogicNoArgs, Then};
 
+/// Default [`Then`] implementation for argument parsers that return `()`.
 pub struct LiteralThen<A, E> {
     pub(crate) argument: A,
     pub(crate) executor: E,
@@ -83,6 +84,7 @@ where
     }
 }
 
+/// Default executor for [`LiteralThen`].
 pub struct LiteralThenExecutor<A, E, C> {
     pub(crate) argument: LiteralThen<A, E>,
     pub(crate) task: C,

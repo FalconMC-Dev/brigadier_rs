@@ -8,6 +8,7 @@ use nom::IResult;
 
 use crate::{CommandError, Execute, Propagate};
 
+/// Parser wrapper that correctly tries both child parsers.
 pub struct ThenWrapper<E1, E2> {
     pub(crate) first: E1,
     pub(crate) second: E2,
