@@ -5,8 +5,12 @@ use nom::IResult;
 use super::LiteralThen;
 use crate::{BuildExecute, BuildPropagate, CommandArgument, CommandError, Execute, Propagate, TaskLogic, TaskLogicNoArgs, Then};
 
+/// Create a new literal parser
+///
+/// This parser has 1 field; the literal that should be matched against.
 pub fn literal(literal: &'static str) -> LiteralArgument { LiteralArgument { literal } }
 
+/// Literal argument parser.
 pub struct LiteralArgument {
     literal: &'static str,
 }
@@ -53,6 +57,9 @@ where
     }
 }
 
+/// Type returned when calling [`build_exec`](BuildExecute::build_exec) or
+/// [`build_propagate`](BuildPropagate::build_propagate) on a
+/// [`LiteralArgument`].
 pub struct LiteralExecutor<A, C> {
     argument: A,
     task: C,

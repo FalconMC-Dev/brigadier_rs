@@ -8,6 +8,7 @@ use nom::IResult;
 use super::ThenWrapper;
 use crate::{BuildExecute, BuildPropagate, CommandArgument, CommandError, Execute, Propagate, TaskLogic, Then};
 
+/// Default [`Then`] implementation for any argument type.
 pub struct CommandThen<A, E, O> {
     pub(crate) argument: A,
     pub(crate) executor: E,
@@ -87,6 +88,7 @@ where
     }
 }
 
+/// Default executor for [`CommandThen`].
 pub struct ThenExecutor<A, E, C, O> {
     pub(crate) argument: CommandThen<A, E, O>,
     pub(crate) task: C,
