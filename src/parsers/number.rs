@@ -2,7 +2,8 @@ use std::marker::PhantomData;
 
 use nom::bytes::complete::tag;
 use nom::character::complete::{char, one_of};
-use nom::combinator::{map_res, opt, recognize};
+use nom::combinator::{opt, recognize};
+use nom::error::{ErrorKind, FromExternalError};
 use nom::multi::{many0, many1};
 use nom::sequence::{preceded, separated_pair, terminated};
 use nom::IResult;
@@ -44,13 +45,15 @@ impl<N> CommandArgument<N> for NumberArgument<N>
 where
     N: PartialOrd,
 {
+    /// This implementation may return a [`Failure`](nom::Err::Failure) when the
+    /// parsed number is outside of the bounds.
     fn parse<'a>(&self, input: &'a str) -> nom::IResult<&'a str, N, CommandError<'a>> {
-        map_res(self.parse, |out| {
-            if out > self.max || out < self.min {
-                return Err(CmdErrorKind::OutOfBounds);
-            }
-            Ok(out)
-        })(input)
+        let (input, out) = (self.parse)(input)?;
+        if out > self.max || out < self.min {
+            Err(nom::Err::Failure(CommandError::from_external_error(input, ErrorKind::MapRes, CmdErrorKind::OutOfBounds)))
+        } else {
+            Ok((input, out))
+        }
     }
 }
 
@@ -98,7 +101,11 @@ macro_rules! impl_num {
         }
 
         fn $parse(input: &str) -> IResult<&str, $num, CommandError> {
-            map_res($num_parse, |out: &str| ::std::str::FromStr::from_str(out))(input)
+            let (input, number) = $num_parse(input)?;
+            match ::std::str::FromStr::from_str(number) {
+                Err(e) => Err(nom::Err::Failure(CommandError::from_external_error(input, ::nom::error::ErrorKind::MapRes, e))),
+                Ok(v) => Ok((input, v)),
+            }
         }
     };
 }

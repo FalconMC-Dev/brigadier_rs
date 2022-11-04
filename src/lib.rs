@@ -14,13 +14,13 @@ pub use parsers::number::{
 mod tests {
     use std::convert::Infallible;
 
-    use crate::{boolean, literal, BuildExecute, Execute, Then};
+    use crate::{integer_i32, literal, BuildExecute, Execute, Then};
 
     #[test]
     fn test_main() {
         let parser = literal("foo")
-            .then(boolean().build_exec(|b| {
-                println!("Found boolean {}", b);
+            .then(integer_i32().max(10).build_exec(|i| {
+                println!("Found integer {}", i);
                 Ok::<(), Infallible>(())
             }))
             .build_exec(|| {
@@ -28,7 +28,7 @@ mod tests {
                 Ok::<(), Infallible>(())
             });
 
-        assert_eq!(("", ()), parser.execute("foo true").unwrap());
+        assert!(parser.execute("foo 13").is_err());
         assert_eq!(("", ()), parser.execute("foo").unwrap());
     }
 }

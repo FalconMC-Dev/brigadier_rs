@@ -12,6 +12,8 @@
 
 ### Fixed
 
+- `NumberAgument` now returns a `Failure` when out of bounds.
+
 ---
 
 ## Release 0.1.0
