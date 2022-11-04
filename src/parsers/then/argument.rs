@@ -46,24 +46,24 @@ where
     }
 }
 
-impl<A, O, E> Execute for CommandThen<A, E, O>
+impl<A, O, E, U> Execute<U> for CommandThen<A, E, O>
 where
     A: CommandArgument<O>,
-    E: Propagate<O>,
+    E: Propagate<O, U>,
 {
-    fn execute<'a>(&self, input: &'a str) -> IResult<&'a str, bool, CommandError<'a>> {
+    fn execute<'a>(&self, input: &'a str) -> IResult<&'a str, U, CommandError<'a>> {
         let (input, result) = self.argument.parse(input)?;
         let (input, _) = char(' ')(input)?;
         self.executor.propagate(input, result)
     }
 }
 
-impl<A, O, E, T> Propagate<T> for CommandThen<A, E, O>
+impl<A, O, E, T, U> Propagate<T, U> for CommandThen<A, E, O>
 where
     A: CommandArgument<O>,
-    E: Propagate<(T, O)>,
+    E: Propagate<(T, O), U>,
 {
-    fn propagate<'a>(&self, input: &'a str, data: T) -> IResult<&'a str, bool, CommandError<'a>> {
+    fn propagate<'a>(&self, input: &'a str, data: T) -> IResult<&'a str, U, CommandError<'a>> {
         let (input, result) = self.argument.parse(input)?;
         let (input, _) = char(' ')(input)?;
         self.executor.propagate(input, (data, result))
@@ -94,13 +94,13 @@ pub struct ThenExecutor<A, E, C, O> {
     pub(crate) task: C,
 }
 
-impl<A, O, E, C> Execute for ThenExecutor<A, E, C, O>
+impl<A, O, E, C, U> Execute<U> for ThenExecutor<A, E, C, O>
 where
     A: CommandArgument<O>,
-    E: Propagate<O>,
-    C: TaskLogic<O>,
+    E: Propagate<O, U>,
+    C: TaskLogic<O, Output = U>,
 {
-    fn execute<'a>(&self, input: &'a str) -> IResult<&'a str, bool, CommandError<'a>> {
+    fn execute<'a>(&self, input: &'a str) -> IResult<&'a str, U, CommandError<'a>> {
         alt((
             |i| {
                 let (input, result) = self.argument.parse(i)?;
@@ -118,14 +118,14 @@ where
     }
 }
 
-impl<A, O, E, C, T> Propagate<T> for ThenExecutor<A, E, C, O>
+impl<A, O, E, C, T, U> Propagate<T, U> for ThenExecutor<A, E, C, O>
 where
     T: Copy,
     A: CommandArgument<O>,
-    E: Propagate<(T, O)>,
-    C: TaskLogic<(T, O)>,
+    E: Propagate<(T, O), U>,
+    C: TaskLogic<(T, O), Output = U>,
 {
-    fn propagate<'a>(&self, input: &'a str, data: T) -> IResult<&'a str, bool, CommandError<'a>> {
+    fn propagate<'a>(&self, input: &'a str, data: T) -> IResult<&'a str, U, CommandError<'a>> {
         alt((
             |i| {
                 let (input, result) = self.argument.parse(i)?;

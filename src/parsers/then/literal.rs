@@ -43,24 +43,24 @@ where
     }
 }
 
-impl<A, E> Execute for LiteralThen<A, E>
+impl<A, E, U> Execute<U> for LiteralThen<A, E>
 where
     A: CommandArgument<()>,
-    E: Execute,
+    E: Execute<U>,
 {
-    fn execute<'a>(&self, input: &'a str) -> IResult<&'a str, bool, CommandError<'a>> {
+    fn execute<'a>(&self, input: &'a str) -> IResult<&'a str, U, CommandError<'a>> {
         let (input, _) = self.argument.parse(input)?;
         let (input, _) = char(' ')(input)?;
         self.executor.execute(input)
     }
 }
 
-impl<A, E, T> Propagate<T> for LiteralThen<A, E>
+impl<A, E, T, U> Propagate<T, U> for LiteralThen<A, E>
 where
     A: CommandArgument<()>,
-    E: Propagate<T>,
+    E: Propagate<T, U>,
 {
-    fn propagate<'a>(&self, input: &'a str, data: T) -> IResult<&'a str, bool, CommandError<'a>> {
+    fn propagate<'a>(&self, input: &'a str, data: T) -> IResult<&'a str, U, CommandError<'a>> {
         let (input, _) = self.argument.parse(input)?;
         let (input, _) = char(' ')(input)?;
         self.executor.propagate(input, data)
@@ -90,13 +90,13 @@ pub struct LiteralThenExecutor<A, E, C> {
     pub(crate) task: C,
 }
 
-impl<A, E, C> Execute for LiteralThenExecutor<A, E, C>
+impl<A, E, C, U> Execute<U> for LiteralThenExecutor<A, E, C>
 where
     A: CommandArgument<()>,
-    E: Execute,
-    C: TaskLogicNoArgs,
+    E: Execute<U>,
+    C: TaskLogicNoArgs<Output = U>,
 {
-    fn execute<'a>(&self, input: &'a str) -> IResult<&'a str, bool, CommandError<'a>> {
+    fn execute<'a>(&self, input: &'a str) -> IResult<&'a str, U, CommandError<'a>> {
         alt((
             |i| {
                 let (input, _) = self.argument.parse(i)?;
@@ -114,14 +114,14 @@ where
     }
 }
 
-impl<A, E, C, T> Propagate<T> for LiteralThenExecutor<A, E, C>
+impl<A, E, C, T, U> Propagate<T, U> for LiteralThenExecutor<A, E, C>
 where
     T: Copy,
     A: CommandArgument<()>,
-    E: Propagate<T>,
-    C: TaskLogic<T>,
+    E: Propagate<T, U>,
+    C: TaskLogic<T, Output = U>,
 {
-    fn propagate<'a>(&self, input: &'a str, data: T) -> IResult<&'a str, bool, CommandError<'a>> {
+    fn propagate<'a>(&self, input: &'a str, data: T) -> IResult<&'a str, U, CommandError<'a>> {
         alt((
             |i| {
                 let (input, _) = self.argument.parse(i)?;

@@ -65,12 +65,12 @@ pub struct LiteralExecutor<A, C> {
     task: C,
 }
 
-impl<A, C> Execute for LiteralExecutor<A, C>
+impl<A, C, U> Execute<U> for LiteralExecutor<A, C>
 where
     A: CommandArgument<()>,
-    C: TaskLogicNoArgs,
+    C: TaskLogicNoArgs<Output = U>,
 {
-    fn execute<'a>(&self, input: &'a str) -> IResult<&'a str, bool, CommandError<'a>> {
+    fn execute<'a>(&self, input: &'a str) -> IResult<&'a str, U, CommandError<'a>> {
         let (input, _) = self.argument.parse(input)?;
         match self.task.run() {
             Err(e) => Err(nom::Err::Failure(CommandError::from_external_error(input, ErrorKind::MapRes, e))),
@@ -79,13 +79,13 @@ where
     }
 }
 
-impl<A, C, T> Propagate<T> for LiteralExecutor<A, C>
+impl<A, C, T, U> Propagate<T, U> for LiteralExecutor<A, C>
 where
     T: Copy,
     A: CommandArgument<()>,
-    C: TaskLogic<T>,
+    C: TaskLogic<T, Output = U>,
 {
-    fn propagate<'a>(&self, input: &'a str, data: T) -> IResult<&'a str, bool, CommandError<'a>> {
+    fn propagate<'a>(&self, input: &'a str, data: T) -> IResult<&'a str, U, CommandError<'a>> {
         let (input, _) = self.argument.parse(input)?;
         match self.task.run(data) {
             Err(e) => Err(nom::Err::Failure(CommandError::from_external_error(input, ErrorKind::MapRes, e))),

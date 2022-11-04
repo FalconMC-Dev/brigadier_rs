@@ -121,35 +121,41 @@ pub trait ArgumentMarkerDefaultImpl {}
 
 /// Command logic definition trait (without arguments).
 ///
-/// Executes command logic. The return type (`bool`) is not finalized yet.
+/// Executes command logic.
 ///
 /// `Fn`-closures implement this trait.
 pub trait TaskLogicNoArgs {
+    /// Error type this logic may return
     type Error: Into<anyhow::Error>;
+    /// Return value upon success
+    type Output;
 
-    fn run(&self) -> Result<bool, Self::Error>;
+    fn run(&self) -> Result<Self::Output, Self::Error>;
 }
 
 /// Command logic definition trait (with arguments).
 ///
-/// Executes command logic. The return type (`bool`) is not finalized yet.
-/// This type receives propagated arguments from parsers upstream.
+/// Executes command logic. This type receives propagated arguments from parsers
+/// upstream.
 ///
 /// `Fn`-closures implement this trait.
 pub trait TaskLogic<O> {
+    /// Error type this logic may return
     type Error: Into<anyhow::Error>;
+    /// Return value upon success
+    type Output;
 
-    fn run(&self, args: O) -> Result<bool, Self::Error>;
+    fn run(&self, args: O) -> Result<Self::Output, Self::Error>;
 }
 
 /// Command parser execution entrypoint.
-pub trait Execute {
-    fn execute<'a>(&self, input: &'a str) -> IResult<&'a str, bool, CommandError<'a>>;
+pub trait Execute<U> {
+    fn execute<'a>(&self, input: &'a str) -> IResult<&'a str, U, CommandError<'a>>;
 }
 
 /// Command parser propagation entrypoint.
 ///
 /// Generally not used by the end user.
-pub trait Propagate<T> {
-    fn propagate<'a>(&self, input: &'a str, data: T) -> IResult<&'a str, bool, CommandError<'a>>;
+pub trait Propagate<T, U> {
+    fn propagate<'a>(&self, input: &'a str, data: T) -> IResult<&'a str, U, CommandError<'a>>;
 }

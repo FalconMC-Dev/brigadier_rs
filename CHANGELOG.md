@@ -1,5 +1,19 @@
 # Changelog
 
+## Unpublished
+
+### Added
+
+- Add simple unit test.
+
+### Changed
+
+- Return value is now any `U` instead of `bool`.
+
+### Fixed
+
+---
+
 ## Release 0.1.0
 
 ### Added
