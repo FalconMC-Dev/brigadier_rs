@@ -5,6 +5,7 @@
 ### Added
 
 - Add simple unit test.
+- New parameter `name` for `BoolArgument`.
 
 ### Changed
 

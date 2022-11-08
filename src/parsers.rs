@@ -17,6 +17,8 @@ pub use literal::{LiteralArgument, LiteralExecutor};
 pub use number::NumberArgument;
 pub use then::{CommandThen, LiteralThen, LiteralThenExecutor, ThenExecutor, ThenWrapper};
 
+use crate::{IntoMultipleUsage, ChildUsage};
+
 pub use self::bool::BoolArgument;
 
 /// Default executor for command argument parsers.
@@ -26,4 +28,26 @@ pub struct DefaultExecutor<A, C, O> {
     pub(crate) argument: A,
     pub(crate) task: C,
     pub(crate) output: PhantomData<O>,
+}
+
+impl<A, C, O> IntoMultipleUsage for DefaultExecutor<A, C, O>
+where
+    A: IntoMultipleUsage,
+{
+    type Item = A::Item;
+
+    fn usage_gen(&self) -> Self::Item {
+        self.argument.usage_gen()
+    }
+}
+
+impl<A, C, O> ChildUsage for DefaultExecutor<A, C, O>
+where
+    A: ChildUsage,
+{
+    type Child = A::Child;
+
+    fn usage_child(&self) -> Self::Child {
+        self.argument.usage_child()
+    }
 }

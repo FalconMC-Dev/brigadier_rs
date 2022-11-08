@@ -6,7 +6,7 @@ pub use literal::*;
 use nom::branch::alt;
 use nom::IResult;
 
-use crate::{CommandError, Execute, Propagate};
+use crate::{CommandError, Execute, Propagate, IntoMultipleUsage, Chain, MultipleUsage};
 
 /// Parser wrapper that correctly tries both child parsers.
 pub struct ThenWrapper<E1, E2> {
@@ -32,5 +32,17 @@ where
 {
     fn propagate<'a>(&self, input: &'a str, data: T) -> IResult<&'a str, U, CommandError<'a>> {
         alt((|i| self.first.propagate(i, data), |i| self.second.propagate(i, data)))(input)
+    }
+}
+
+impl<E1, E2> IntoMultipleUsage for ThenWrapper<E1, E2>
+where
+    E1: IntoMultipleUsage,
+    E2: IntoMultipleUsage,
+{
+    type Item = Chain<E1::Item, E2::Item>;
+
+    fn usage_gen(&self) -> Self::Item {
+        self.first.usage_gen().chain(self.second.usage_gen())
     }
 }

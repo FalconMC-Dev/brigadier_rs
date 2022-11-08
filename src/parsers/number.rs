@@ -10,13 +10,14 @@ use nom::IResult;
 
 use super::CommandThen;
 use crate::error::CmdErrorKind;
-use crate::{ArgumentMarkerDefaultImpl, CommandArgument, CommandError, Then};
+use crate::{ArgumentMarkerDefaultImpl, CommandArgument, CommandError, Then, IntoMultipleUsage, ChildUsage};
 
 /// Numeric argument parser.
 ///
 /// This type can be bounded between a minimum and maximum value (standard MIN
 /// and MAX of type `N`). A parse method for type `N` must be provided also.
 pub struct NumberArgument<N> {
+    pub(crate) name: &'static str,
     pub(crate) min: N,
     pub(crate) max: N,
     pub(crate) parse: fn(&str) -> IResult<&str, N, CommandError>,
@@ -69,6 +70,22 @@ impl<E, N> Then<E> for NumberArgument<N> {
     }
 }
 
+impl<N> IntoMultipleUsage for NumberArgument<N> {
+    type Item = <[&'static str; 3] as IntoMultipleUsage>::Item;
+
+    fn usage_gen(&self) -> Self::Item {
+        self.usage_child().usage_gen()
+    }
+}
+
+impl<N> ChildUsage for NumberArgument<N> {
+    type Child = [&'static str; 3];
+
+    fn usage_child(&self) -> Self::Child {
+        ["<", self.name, ">"]
+    }
+}
+
 impl<N> ArgumentMarkerDefaultImpl for NumberArgument<N> {}
 
 fn decimal(input: &str) -> IResult<&str, &str, CommandError> {
@@ -92,8 +109,9 @@ macro_rules! impl_num {
     };
     ($num:ty => $name:ident = $parse:ident + $num_parse:ident) => {
         #[doc = stringify!(Create a $num argument parser.)]
-        pub fn $name() -> NumberArgument<$num> {
+        pub fn $name(name: &'static str) -> NumberArgument<$num> {
             NumberArgument {
+                name,
                 min: <$num>::MIN,
                 max: <$num>::MAX,
                 parse: $parse,
