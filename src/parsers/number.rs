@@ -10,7 +10,7 @@ use nom::IResult;
 
 use super::CommandThen;
 use crate::error::CmdErrorKind;
-use crate::{ArgumentMarkerDefaultImpl, CommandArgument, CommandError, Then, IntoMultipleUsage, ChildUsage};
+use crate::{ArgumentMarkerDefaultImpl, ChildUsage, CommandArgument, CommandError, IntoMultipleUsage, Then};
 
 /// Numeric argument parser.
 ///
@@ -73,17 +73,13 @@ impl<E, N> Then<E> for NumberArgument<N> {
 impl<N> IntoMultipleUsage for NumberArgument<N> {
     type Item = <[&'static str; 3] as IntoMultipleUsage>::Item;
 
-    fn usage_gen(&self) -> Self::Item {
-        self.usage_child().usage_gen()
-    }
+    fn usage_gen(&self) -> Self::Item { self.usage_child().usage_gen() }
 }
 
 impl<N> ChildUsage for NumberArgument<N> {
     type Child = [&'static str; 3];
 
-    fn usage_child(&self) -> Self::Child {
-        ["<", self.name, ">"]
-    }
+    fn usage_child(&self) -> Self::Child { ["<", self.name, ">"] }
 }
 
 impl<N> ArgumentMarkerDefaultImpl for NumberArgument<N> {}

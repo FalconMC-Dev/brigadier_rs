@@ -18,8 +18,5 @@ where
         }
     }
 
-    fn is_next(&self) -> bool {
-        self.left.is_next() || self.right.is_next()
-    }
+    fn is_next(&self) -> bool { self.left.is_next() || self.right.is_next() }
 }
-

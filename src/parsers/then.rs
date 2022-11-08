@@ -6,7 +6,7 @@ pub use literal::*;
 use nom::branch::alt;
 use nom::IResult;
 
-use crate::{CommandError, Execute, Propagate, IntoMultipleUsage, Chain, MultipleUsage};
+use crate::{Chain, CommandError, Execute, IntoMultipleUsage, MultipleUsage, Propagate};
 
 /// Parser wrapper that correctly tries both child parsers.
 pub struct ThenWrapper<E1, E2> {
@@ -42,7 +42,5 @@ where
 {
     type Item = Chain<E1::Item, E2::Item>;
 
-    fn usage_gen(&self) -> Self::Item {
-        self.first.usage_gen().chain(self.second.usage_gen())
-    }
+    fn usage_gen(&self) -> Self::Item { self.first.usage_gen().chain(self.second.usage_gen()) }
 }

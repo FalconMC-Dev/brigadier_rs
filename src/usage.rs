@@ -1,11 +1,11 @@
-use std::fmt::{Write, Error};
+use std::fmt::{Error, Write};
 
-mod combine;
 mod chain;
+mod combine;
 mod prefix;
 
-pub use combine::*;
 pub use chain::*;
+pub use combine::*;
 pub use prefix::*;
 
 pub trait SingleUsage {
@@ -41,9 +41,7 @@ pub trait IntoMultipleUsage {
 }
 
 impl<'a> SingleUsage for &'a str {
-    fn usage<W: Write>(&self, writer: &mut W) -> Result<(), Error> {
-        writer.write_str(self)
-    }
+    fn usage<W: Write>(&self, writer: &mut W) -> Result<(), Error> { writer.write_str(self) }
 }
 
 impl<U> SingleUsage for Option<U>
@@ -58,7 +56,7 @@ where
     }
 }
 
-impl<'a, I, U> MultipleUsage for I
+impl<I, U> MultipleUsage for I
 where
     U: SingleUsage,
     I: ExactSizeIterator<Item = U>,
@@ -68,9 +66,7 @@ where
         Some(next.usage(writer))
     }
 
-    fn is_next(&self) -> bool {
-        self.len() > 0
-    }
+    fn is_next(&self) -> bool { self.len() > 0 }
 }
 
 impl<U> IntoMultipleUsage for U
@@ -79,7 +75,5 @@ where
 {
     type Item = std::iter::Once<U>;
 
-    fn usage_gen(&self) -> Self::Item {
-        std::iter::once(self.clone())
-    }
+    fn usage_gen(&self) -> Self::Item { std::iter::once(self.clone()) }
 }

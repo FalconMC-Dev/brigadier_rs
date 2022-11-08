@@ -2,13 +2,7 @@ use std::fmt::Write;
 
 use crate::{MultipleUsage, SingleUsage};
 
-pub fn prefix<P, U>(prefix: P, usage: U) -> Prefix<P, U>
-{
-    Prefix {
-        prefix,
-        usage,
-    }
-}
+pub fn prefix<P, U>(prefix: P, usage: U) -> Prefix<P, U> { Prefix { prefix, usage } }
 
 #[derive(Debug, Clone, Copy)]
 pub struct Prefix<P, U> {
@@ -30,7 +24,5 @@ where
         self.usage.usage_next(writer)
     }
 
-    fn is_next(&self) -> bool {
-        self.usage.is_next()
-    }
+    fn is_next(&self) -> bool { self.usage.is_next() }
 }

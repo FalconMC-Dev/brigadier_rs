@@ -17,9 +17,8 @@ pub use literal::{LiteralArgument, LiteralExecutor};
 pub use number::NumberArgument;
 pub use then::{CommandThen, LiteralThen, LiteralThenExecutor, ThenExecutor, ThenWrapper};
 
-use crate::{IntoMultipleUsage, ChildUsage};
-
 pub use self::bool::BoolArgument;
+use crate::{ChildUsage, IntoMultipleUsage};
 
 /// Default executor for command argument parsers.
 ///
@@ -36,9 +35,7 @@ where
 {
     type Item = A::Item;
 
-    fn usage_gen(&self) -> Self::Item {
-        self.argument.usage_gen()
-    }
+    fn usage_gen(&self) -> Self::Item { self.argument.usage_gen() }
 }
 
 impl<A, C, O> ChildUsage for DefaultExecutor<A, C, O>
@@ -47,7 +44,5 @@ where
 {
     type Child = A::Child;
 
-    fn usage_child(&self) -> Self::Child {
-        self.argument.usage_child()
-    }
+    fn usage_child(&self) -> Self::Child { self.argument.usage_child() }
 }

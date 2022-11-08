@@ -6,7 +6,10 @@ use nom::error::{ErrorKind, FromExternalError};
 use nom::IResult;
 
 use super::ThenWrapper;
-use crate::{BuildExecute, BuildPropagate, CommandArgument, CommandError, Execute, Propagate, TaskLogic, Then, IntoMultipleUsage, MultipleUsage, Chain, ChildUsage, Prefix, prefix};
+use crate::{
+    prefix, BuildExecute, BuildPropagate, Chain, ChildUsage, CommandArgument, CommandError, Execute, IntoMultipleUsage, MultipleUsage,
+    Prefix, Propagate, TaskLogic, Then,
+};
 
 /// Default [`Then`] implementation for any argument type.
 pub struct CommandThen<A, E, O> {
@@ -54,7 +57,9 @@ where
     type Item = Chain<A::Item, Prefix<(A::Child, &'static str), E::Item>>;
 
     fn usage_gen(&self) -> Self::Item {
-        self.argument.usage_gen().chain(prefix((self.argument.usage_child(), " "), self.executor.usage_gen()))
+        self.argument
+            .usage_gen()
+            .chain(prefix((self.argument.usage_child(), " "), self.executor.usage_gen()))
     }
 }
 
@@ -64,9 +69,7 @@ where
 {
     type Child = A::Child;
 
-    fn usage_child(&self) -> Self::Child {
-        self.argument.usage_child()
-    }
+    fn usage_child(&self) -> Self::Child { self.argument.usage_child() }
 }
 
 impl<A, O, E, U> Execute<U> for CommandThen<A, E, O>
@@ -172,9 +175,7 @@ where
 {
     type Item = <CommandThen<A, E, O> as IntoMultipleUsage>::Item;
 
-    fn usage_gen(&self) -> Self::Item {
-        self.argument.usage_gen()
-    }
+    fn usage_gen(&self) -> Self::Item { self.argument.usage_gen() }
 }
 
 impl<A, E, C, O> ChildUsage for ThenExecutor<A, E, C, O>
@@ -183,7 +184,5 @@ where
 {
     type Child = <CommandThen<A, E, O> as ChildUsage>::Child;
 
-    fn usage_child(&self) -> Self::Child {
-        self.argument.usage_child()
-    }
+    fn usage_child(&self) -> Self::Child { self.argument.usage_child() }
 }

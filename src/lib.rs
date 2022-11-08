@@ -1,7 +1,7 @@
 mod argument;
 mod error;
-mod usage;
 pub mod parsers;
+mod usage;
 
 pub use argument::*;
 pub use error::{CmdErrorKind, CommandError};
@@ -16,7 +16,7 @@ pub use usage::*;
 mod tests {
     use std::convert::Infallible;
 
-    use crate::{integer_i32, literal, BuildExecute, Execute, Then, IntoMultipleUsage, MultipleUsage, boolean};
+    use crate::{boolean, integer_i32, literal, BuildExecute, Execute, IntoMultipleUsage, MultipleUsage, Then};
 
     #[test]
     fn test_main() {
@@ -50,9 +50,13 @@ mod tests {
         // let usage = parser.usage_gen(None::<&'static str>);
         let mut result = String::new();
 
-        while let Some(Ok(())) = usage.usage_next(&mut result) {
-            println!("{}", result);
-            result.clear();
-        }
+        usage.usage_next(&mut result);
+        assert_eq!("foo", result);
+        result.clear();
+        usage.usage_next(&mut result);
+        assert_eq!("foo <bar>", result);
+        result.clear();
+        usage.usage_next(&mut result);
+        assert_eq!("foo <buzz>", result);
     }
 }

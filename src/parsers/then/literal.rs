@@ -4,7 +4,10 @@ use nom::error::{ErrorKind, FromExternalError};
 use nom::IResult;
 
 use super::ThenWrapper;
-use crate::{BuildExecute, BuildPropagate, CommandArgument, CommandError, Execute, Propagate, TaskLogic, TaskLogicNoArgs, Then, IntoMultipleUsage, ChildUsage, Chain, Prefix, MultipleUsage, prefix};
+use crate::{
+    prefix, BuildExecute, BuildPropagate, Chain, ChildUsage, CommandArgument, CommandError, Execute, IntoMultipleUsage, MultipleUsage,
+    Prefix, Propagate, TaskLogic, TaskLogicNoArgs, Then,
+};
 
 /// Default [`Then`] implementation for argument parsers that return `()`.
 pub struct LiteralThen<A, E> {
@@ -51,7 +54,9 @@ where
     type Item = Chain<A::Item, Prefix<(A::Child, &'static str), E::Item>>;
 
     fn usage_gen(&self) -> Self::Item {
-        self.argument.usage_gen().chain(prefix((self.argument.usage_child(), " "), self.executor.usage_gen()))
+        self.argument
+            .usage_gen()
+            .chain(prefix((self.argument.usage_child(), " "), self.executor.usage_gen()))
     }
 }
 
@@ -61,9 +66,7 @@ where
 {
     type Child = A::Child;
 
-    fn usage_child(&self) -> Self::Child {
-        self.argument.usage_child()
-    }
+    fn usage_child(&self) -> Self::Child { self.argument.usage_child() }
 }
 
 impl<A, E, U> Execute<U> for LiteralThen<A, E>
@@ -168,9 +171,7 @@ where
 {
     type Item = <LiteralThen<A, E> as IntoMultipleUsage>::Item;
 
-    fn usage_gen(&self) -> Self::Item {
-        self.argument.usage_gen()
-    }
+    fn usage_gen(&self) -> Self::Item { self.argument.usage_gen() }
 }
 
 impl<A, E, C> ChildUsage for LiteralThenExecutor<A, E, C>
@@ -179,7 +180,5 @@ where
 {
     type Child = <LiteralThen<A, E> as ChildUsage>::Child;
 
-    fn usage_child(&self) -> Self::Child {
-        self.argument.usage_child()
-    }
+    fn usage_child(&self) -> Self::Child { self.argument.usage_child() }
 }

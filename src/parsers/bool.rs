@@ -4,12 +4,10 @@ use nom::branch::alt;
 use nom::bytes::complete::tag_no_case;
 
 use super::CommandThen;
-use crate::{ArgumentMarkerDefaultImpl, CommandArgument, CommandError, Then, IntoMultipleUsage, ChildUsage};
+use crate::{ArgumentMarkerDefaultImpl, ChildUsage, CommandArgument, CommandError, IntoMultipleUsage, Then};
 
 /// Create a boolean parser
-pub fn boolean(name: &'static str) -> BoolArgument {
-    BoolArgument { name }
-}
+pub fn boolean(name: &'static str) -> BoolArgument { BoolArgument { name } }
 
 /// Boolean argument parser.
 ///
@@ -51,15 +49,11 @@ impl<E> Then<E> for BoolArgument {
 impl IntoMultipleUsage for BoolArgument {
     type Item = <[&'static str; 3] as IntoMultipleUsage>::Item;
 
-    fn usage_gen(&self) -> Self::Item {
-        self.usage_child().usage_gen()
-    }
+    fn usage_gen(&self) -> Self::Item { self.usage_child().usage_gen() }
 }
 
 impl ChildUsage for BoolArgument {
     type Child = [&'static str; 3];
 
-    fn usage_child(&self) -> Self::Child {
-        ["<", self.name, ">"]
-    }
+    fn usage_child(&self) -> Self::Child { ["<", self.name, ">"] }
 }
