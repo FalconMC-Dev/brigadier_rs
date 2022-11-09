@@ -46,17 +46,10 @@ mod tests {
                 println!("Didn't wanna give us a value aye?");
                 Ok::<(), Infallible>(())
             });
-        let mut usage = parser.usage_gen();
-        // let usage = parser.usage_gen(None::<&'static str>);
-        let mut result = String::new();
+        let mut usage = parser.usage_gen().string_iter();
 
-        usage.usage_next(&mut result);
-        assert_eq!("foo", result);
-        result.clear();
-        usage.usage_next(&mut result);
-        assert_eq!("foo <bar>", result);
-        result.clear();
-        usage.usage_next(&mut result);
-        assert_eq!("foo <buzz>", result);
+        assert_eq!("foo", usage.next().unwrap().unwrap());
+        assert_eq!("foo <bar>", usage.next().unwrap().unwrap());
+        assert_eq!("foo <buzz>", usage.next().unwrap().unwrap());
     }
 }

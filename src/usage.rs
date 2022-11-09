@@ -1,11 +1,13 @@
 use std::fmt::{Error, Write};
 
-mod chain;
-mod combine;
-mod prefix;
+pub(crate) mod chain;
+pub(crate) mod combine;
+pub(crate) mod display;
+pub(crate) mod prefix;
 
 pub use chain::*;
 pub use combine::*;
+pub use display::UsagePrint;
 pub use prefix::*;
 
 /// A single usage able to write itself to a [`Write`](std::fmt::Write).
@@ -36,6 +38,17 @@ pub trait MultipleUsage {
             left: self,
             right: other,
         }
+    }
+
+    /// Returns an iterator of [`String`].
+    ///
+    /// This allocates as many strings as there are usages.
+    /// Convenience method.
+    fn string_iter(self) -> UsagePrint<Self>
+    where
+        Self: Sized,
+    {
+        UsagePrint { usage: self }
     }
 }
 

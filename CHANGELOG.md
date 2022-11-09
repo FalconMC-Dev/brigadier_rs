@@ -17,6 +17,7 @@
 - Implement Usage traits for `BoolArgument`, `LiteralArgument` and `NumberArgument`.
 - Implement Usage traits for `CommandThen`, `ThenWrapper` and `LiteralThen`.
 - Implement Usage traits for `DefaultExecutor`, `LiteralExecutor`, `LiteralThenExecutor` and `ThenExecutor`.
+- Add `UsagePrint`.
 
 ### Changed
 
