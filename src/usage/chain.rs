@@ -1,5 +1,9 @@
 use crate::MultipleUsage;
 
+/// A chain of two `MultipleUsage` iterators.
+///
+/// When iterating over this type, it will return all usages from
+/// both contained `MultipleUsage` iterators.
 #[derive(Debug, Clone, Copy)]
 pub struct Chain<U1, U2> {
     pub(crate) left: U1,

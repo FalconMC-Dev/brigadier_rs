@@ -8,15 +8,26 @@ pub use chain::*;
 pub use combine::*;
 pub use prefix::*;
 
+/// A single usage able to write itself to a [`Write`](std::fmt::Write).
 pub trait SingleUsage {
+    /// Write self to the provided writer.
     fn usage<W: Write>(&self, writer: &mut W) -> Result<(), Error>;
 }
 
+/// One or more usages that can be iterated through.
+///
+/// This trait is similar to the [`Iterator`] trait.
 pub trait MultipleUsage {
+    /// Write the next usage to the writer and advance the internal iterator.
+    ///
+    /// If `None` is returned, there are no more usages. The `Result<(), Error>`
+    /// can be returned by writing to the writer.
     fn usage_next<W: Write>(&mut self, writer: &mut W) -> Option<Result<(), Error>>;
 
+    /// Returns true if there are usages left, otherwise returns false.
     fn is_next(&self) -> bool;
 
+    /// Chains this `MultipleUsage` with another MultipleUsage.
     fn chain<U2>(self, other: U2) -> Chain<Self, U2>
     where
         Self: Sized,
@@ -28,15 +39,23 @@ pub trait MultipleUsage {
     }
 }
 
+/// Implemented on `MultipleUsage` that want to return a single "root" usage
+/// in the parser tree.
 pub trait ChildUsage {
+    /// Usage that is returned.
     type Child: SingleUsage;
 
+    /// Return a new `SingleUsage`, this represents the path from the root up
+    /// until this parser.
     fn usage_child(&self) -> Self::Child;
 }
 
+/// Type that can build a `MultipleUsage`.
 pub trait IntoMultipleUsage {
+    /// The returned `MultipleUsage` iterator.
     type Item: MultipleUsage;
 
+    /// Return a new `MultipleUsage` based on self (without consuming self).
     fn usage_gen(&self) -> Self::Item;
 }
 

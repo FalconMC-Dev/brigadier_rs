@@ -2,8 +2,13 @@ use std::fmt::Write;
 
 use crate::{MultipleUsage, SingleUsage};
 
+/// Returns a new [`Prefix`].
+///
+/// This will prefix each item in `usage` with `prefix`.
 pub fn prefix<P, U>(prefix: P, usage: U) -> Prefix<P, U> { Prefix { prefix, usage } }
 
+/// Prefixes every usage returned by the contained `MultipleUsage` iterator
+/// with the contained `SingleUsage`.
 #[derive(Debug, Clone, Copy)]
 pub struct Prefix<P, U> {
     prefix: P,
