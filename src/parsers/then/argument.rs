@@ -54,13 +54,9 @@ where
     A: IntoMultipleUsage + ChildUsage,
     E: IntoMultipleUsage,
 {
-    type Item = Chain<A::Item, Prefix<(A::Child, &'static str), E::Item>>;
+    type Item = Prefix<(A::Child, &'static str), E::Item>;
 
-    fn usage_gen(&self) -> Self::Item {
-        self.argument
-            .usage_gen()
-            .chain(prefix((self.argument.usage_child(), " "), self.executor.usage_gen()))
-    }
+    fn usage_gen(&self) -> Self::Item { prefix((self.argument.usage_child(), " "), self.executor.usage_gen()) }
 }
 
 impl<A, E, O> ChildUsage for CommandThen<A, E, O>
@@ -178,11 +174,17 @@ where
 
 impl<A, E, C, O> IntoMultipleUsage for ThenExecutor<A, E, C, O>
 where
-    CommandThen<A, E, O>: IntoMultipleUsage,
+    A: IntoMultipleUsage + ChildUsage,
+    E: IntoMultipleUsage,
 {
-    type Item = <CommandThen<A, E, O> as IntoMultipleUsage>::Item;
+    type Item = Chain<A::Item, Prefix<(A::Child, &'static str), E::Item>>;
 
-    fn usage_gen(&self) -> Self::Item { self.argument.usage_gen() }
+    fn usage_gen(&self) -> Self::Item {
+        self.argument
+            .argument
+            .usage_gen()
+            .chain(prefix((self.argument.argument.usage_child(), " "), self.argument.executor.usage_gen()))
+    }
 }
 
 impl<A, E, C, O> ChildUsage for ThenExecutor<A, E, C, O>

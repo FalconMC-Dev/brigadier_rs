@@ -5,7 +5,7 @@ use nom::bytes::complete::tag_no_case;
 use nom::character::complete::char;
 use nom::error::{ErrorKind, FromExternalError};
 
-use super::{LiteralExecutor, LiteralThenExecutor};
+use super::{LiteralExecutor, LiteralThen, LiteralThenExecutor};
 use crate::{BuildExecute, ChildUsage, CommandArgument, CommandError, Execute, IntoMultipleUsage, TaskLogic, UsagePrint};
 
 pub struct HelpArgument<E> {
@@ -108,3 +108,5 @@ where
 impl<A, C> ThenHelp for LiteralExecutor<A, C> {}
 
 impl<A, E, C> ThenHelp for LiteralThenExecutor<A, E, C> {}
+
+impl<A, E> ThenHelp for LiteralThen<A, E> {}

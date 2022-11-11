@@ -51,13 +51,9 @@ where
     A: IntoMultipleUsage + ChildUsage,
     E: IntoMultipleUsage,
 {
-    type Item = Chain<A::Item, Prefix<(A::Child, &'static str), E::Item>>;
+    type Item = Prefix<(A::Child, &'static str), E::Item>;
 
-    fn usage_gen(&self) -> Self::Item {
-        self.argument
-            .usage_gen()
-            .chain(prefix((self.argument.usage_child(), " "), self.executor.usage_gen()))
-    }
+    fn usage_gen(&self) -> Self::Item { prefix((self.argument.usage_child(), " "), self.executor.usage_gen()) }
 }
 
 impl<A, E> ChildUsage for LiteralThen<A, E>
@@ -174,11 +170,17 @@ where
 
 impl<A, E, C> IntoMultipleUsage for LiteralThenExecutor<A, E, C>
 where
-    LiteralThen<A, E>: IntoMultipleUsage,
+    A: IntoMultipleUsage + ChildUsage,
+    E: IntoMultipleUsage,
 {
-    type Item = <LiteralThen<A, E> as IntoMultipleUsage>::Item;
+    type Item = Chain<A::Item, Prefix<(A::Child, &'static str), E::Item>>;
 
-    fn usage_gen(&self) -> Self::Item { self.argument.usage_gen() }
+    fn usage_gen(&self) -> Self::Item {
+        self.argument
+            .argument
+            .usage_gen()
+            .chain(prefix((self.argument.argument.usage_child(), " "), self.argument.executor.usage_gen()))
+    }
 }
 
 impl<A, E, C> ChildUsage for LiteralThenExecutor<A, E, C>

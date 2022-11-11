@@ -58,6 +58,7 @@ mod tests {
                     assert_eq!("foo", usages.next().unwrap().unwrap());
                     assert_eq!("foo <bar>", usages.next().unwrap().unwrap());
                     assert_eq!("foo <buzz>", usages.next().unwrap().unwrap());
+                    assert!(usages.next().is_none());
                     Ok::<(), Infallible>(())
                 }),
         );
