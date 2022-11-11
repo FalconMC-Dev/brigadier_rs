@@ -13,6 +13,9 @@ pub use parsers::number::{
 };
 pub use usage::*;
 
+/// Parser trait combination of `Execute` and `HelpUsage`.
+///
+/// This is the result of combining one or more parsers.
 pub trait CommandParser<U>: Execute<U> + HelpUsage {}
 
 impl<T, U> CommandParser<U> for T where T: Execute<U> + HelpUsage {}

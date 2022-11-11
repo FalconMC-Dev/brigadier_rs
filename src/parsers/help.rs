@@ -8,12 +8,22 @@ use nom::error::{ErrorKind, FromExternalError};
 use super::{LiteralExecutor, LiteralThen, LiteralThenExecutor};
 use crate::{BuildExecute, ChildUsage, CommandArgument, CommandError, Execute, IntoMultipleUsage, TaskLogic, UsagePrint};
 
+/// Parser that parses a root command followed by `" help"`.
+///
+/// This parser produces an iterator over all the different usages the root
+/// parser can parse.
 pub struct HelpArgument<E> {
     pub(crate) argument: E,
     pub(crate) description: &'static str,
 }
 
+/// Type that can produce a usage list and help command.
+///
+/// This should conventionally only be implemented on literal types (types that
+/// implement [`CommandArgument<()>`](crate::CommandArgument)).
 pub trait ThenHelp {
+    /// Attach this parser to a [`HelpArgument`] and a description, the help
+    /// name will be the usage returned by the root parser.
     fn help(self, description: &'static str) -> HelpArgument<Self>
     where
         Self: Sized,
@@ -47,6 +57,16 @@ where
     fn build_exec(self, task: C) -> HelpExecutor<E, C> { HelpExecutor { help: self, task } }
 }
 
+impl<E, U> Execute<U> for HelpArgument<E>
+where
+    E: Execute<U>,
+{
+    fn execute<'a>(&self, input: &'a str) -> nom::IResult<&'a str, U, CommandError<'a>> { self.argument.execute(input) }
+}
+
+/// Executor for a custom help message.
+///
+/// Similar to [`DefaultExecutor`](crate::parsers::DefaultExecutor).
 pub struct HelpExecutor<E, C> {
     pub(crate) help: HelpArgument<E>,
     pub(crate) task: C,
@@ -71,13 +91,19 @@ where
     }
 }
 
+/// Name and description of a command.
+///
+/// This is primarily meant to generate quick overviews of available parser
+/// commands.
 #[derive(Debug, Clone)]
 pub struct HelpEntry {
     pub name: Cow<'static, str>,
     pub description: Cow<'static, str>,
 }
 
+/// Type that returns a [`HelpEntry`].
 pub trait HelpUsage {
+    /// Returns name and description of this type in a [`HelpEntry`].
     fn help(&self) -> HelpEntry;
 }
 

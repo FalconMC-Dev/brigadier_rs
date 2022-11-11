@@ -18,6 +18,8 @@
 - Implement Usage traits for `CommandThen`, `ThenWrapper` and `LiteralThen`.
 - Implement Usage traits for `DefaultExecutor`, `LiteralExecutor`, `LiteralThenExecutor` and `ThenExecutor`.
 - Add `UsagePrint`.
+- Add `HelpUsage`, `ThenHelp`, `HelpArgument`, `HelpExecutor` and `HelpEntry`.
+- Add `CommandParser`.
 
 ### Changed
 
