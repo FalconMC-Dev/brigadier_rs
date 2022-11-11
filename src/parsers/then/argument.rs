@@ -6,7 +6,10 @@ use nom::error::{ErrorKind, FromExternalError};
 use nom::IResult;
 
 use super::ThenWrapper;
-use crate::{BuildExecute, BuildPropagate, CommandArgument, CommandError, Execute, Propagate, TaskLogic, Then};
+use crate::{
+    prefix, BuildExecute, BuildPropagate, Chain, ChildUsage, CommandArgument, CommandError, Execute, IntoMultipleUsage, MultipleUsage,
+    Prefix, Propagate, TaskLogic, Then,
+};
 
 /// Default [`Then`] implementation for any argument type.
 pub struct CommandThen<A, E, O> {
@@ -44,6 +47,25 @@ where
             task,
         }
     }
+}
+
+impl<A, E, O> IntoMultipleUsage for CommandThen<A, E, O>
+where
+    A: IntoMultipleUsage + ChildUsage,
+    E: IntoMultipleUsage,
+{
+    type Item = Prefix<(A::Child, &'static str), E::Item>;
+
+    fn usage_gen(&self) -> Self::Item { prefix((self.argument.usage_child(), " "), self.executor.usage_gen()) }
+}
+
+impl<A, E, O> ChildUsage for CommandThen<A, E, O>
+where
+    A: ChildUsage,
+{
+    type Child = A::Child;
+
+    fn usage_child(&self) -> Self::Child { self.argument.usage_child() }
 }
 
 impl<A, O, E, U> Execute<U> for CommandThen<A, E, O>
@@ -94,6 +116,13 @@ pub struct ThenExecutor<A, E, C, O> {
     pub(crate) task: C,
 }
 
+impl<A, E, C, O> CommandArgument<O> for ThenExecutor<A, E, C, O>
+where
+    A: CommandArgument<O>,
+{
+    fn parse<'a>(&self, input: &'a str) -> IResult<&'a str, O, CommandError<'a>> { self.argument.parse(input) }
+}
+
 impl<A, O, E, C, U> Execute<U> for ThenExecutor<A, E, C, O>
 where
     A: CommandArgument<O>,
@@ -141,4 +170,28 @@ where
             },
         ))(input)
     }
+}
+
+impl<A, E, C, O> IntoMultipleUsage for ThenExecutor<A, E, C, O>
+where
+    A: IntoMultipleUsage + ChildUsage,
+    E: IntoMultipleUsage,
+{
+    type Item = Chain<A::Item, Prefix<(A::Child, &'static str), E::Item>>;
+
+    fn usage_gen(&self) -> Self::Item {
+        self.argument
+            .argument
+            .usage_gen()
+            .chain(prefix((self.argument.argument.usage_child(), " "), self.argument.executor.usage_gen()))
+    }
+}
+
+impl<A, E, C, O> ChildUsage for ThenExecutor<A, E, C, O>
+where
+    CommandThen<A, E, O>: ChildUsage,
+{
+    type Child = <CommandThen<A, E, O> as ChildUsage>::Child;
+
+    fn usage_child(&self) -> Self::Child { self.argument.usage_child() }
 }

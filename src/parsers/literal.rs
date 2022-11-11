@@ -3,7 +3,10 @@ use nom::error::{ErrorKind, FromExternalError};
 use nom::IResult;
 
 use super::LiteralThen;
-use crate::{BuildExecute, BuildPropagate, CommandArgument, CommandError, Execute, Propagate, TaskLogic, TaskLogicNoArgs, Then};
+use crate::{
+    BuildExecute, BuildPropagate, ChildUsage, CommandArgument, CommandError, Execute, IntoMultipleUsage, Propagate, TaskLogic,
+    TaskLogicNoArgs, Then,
+};
 
 /// Create a new literal parser
 ///
@@ -57,6 +60,18 @@ where
     }
 }
 
+impl IntoMultipleUsage for LiteralArgument {
+    type Item = <&'static str as IntoMultipleUsage>::Item;
+
+    fn usage_gen(&self) -> Self::Item { self.usage_child().usage_gen() }
+}
+
+impl ChildUsage for LiteralArgument {
+    type Child = &'static str;
+
+    fn usage_child(&self) -> Self::Child { self.literal }
+}
+
 /// Type returned when calling [`build_exec`](BuildExecute::build_exec) or
 /// [`build_propagate`](BuildPropagate::build_propagate) on a
 /// [`LiteralArgument`].
@@ -92,4 +107,29 @@ where
             Ok(v) => Ok((input, v)),
         }
     }
+}
+
+impl<A, C> CommandArgument<()> for LiteralExecutor<A, C>
+where
+    A: CommandArgument<()>,
+{
+    fn parse<'a>(&self, input: &'a str) -> IResult<&'a str, (), CommandError<'a>> { self.argument.parse(input) }
+}
+
+impl<A, C> IntoMultipleUsage for LiteralExecutor<A, C>
+where
+    A: IntoMultipleUsage,
+{
+    type Item = A::Item;
+
+    fn usage_gen(&self) -> Self::Item { self.argument.usage_gen() }
+}
+
+impl<A, C> ChildUsage for LiteralExecutor<A, C>
+where
+    A: ChildUsage,
+{
+    type Child = A::Child;
+
+    fn usage_child(&self) -> Self::Child { self.argument.usage_child() }
 }
