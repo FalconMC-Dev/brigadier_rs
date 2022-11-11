@@ -7,6 +7,13 @@ use super::{ArgumentMarkerDefaultImpl, BuildExecute, BuildPropagate, CommandArgu
 use crate::parsers::DefaultExecutor;
 use crate::CommandError;
 
+impl<A, O, C> CommandArgument<O> for DefaultExecutor<A, O, C>
+where
+    A: CommandArgument<O>,
+{
+    fn parse<'a>(&self, input: &'a str) -> IResult<&'a str, O, CommandError<'a>> { self.argument.parse(input) }
+}
+
 impl<A, O, C> BuildExecute<C, DefaultExecutor<A, C, O>> for A
 where
     A: ArgumentMarkerDefaultImpl + CommandArgument<O>,

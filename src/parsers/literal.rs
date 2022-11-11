@@ -109,6 +109,13 @@ where
     }
 }
 
+impl<A, C> CommandArgument<()> for LiteralExecutor<A, C>
+where
+    A: CommandArgument<()>,
+{
+    fn parse<'a>(&self, input: &'a str) -> IResult<&'a str, (), CommandError<'a>> { self.argument.parse(input) }
+}
+
 impl<A, C> IntoMultipleUsage for LiteralExecutor<A, C>
 where
     A: IntoMultipleUsage,

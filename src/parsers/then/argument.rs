@@ -120,6 +120,13 @@ pub struct ThenExecutor<A, E, C, O> {
     pub(crate) task: C,
 }
 
+impl<A, E, C, O> CommandArgument<O> for ThenExecutor<A, E, C, O>
+where
+    A: CommandArgument<O>,
+{
+    fn parse<'a>(&self, input: &'a str) -> IResult<&'a str, O, CommandError<'a>> { self.argument.parse(input) }
+}
+
 impl<A, O, E, C, U> Execute<U> for ThenExecutor<A, E, C, O>
 where
     A: CommandArgument<O>,

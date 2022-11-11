@@ -7,12 +7,14 @@
 //! - i8, u8, i16, u16, i32, u32, i64, u64, f32, f64: [`NumberArgument`]
 
 pub(crate) mod bool;
+pub(crate) mod help;
 pub(crate) mod literal;
 pub(crate) mod number;
 pub(crate) mod then;
 
 use std::marker::PhantomData;
 
+pub use help::{HelpArgument, HelpExecutor};
 pub use literal::{LiteralArgument, LiteralExecutor};
 pub use number::NumberArgument;
 pub use then::{CommandThen, LiteralThen, LiteralThenExecutor, ThenExecutor, ThenWrapper};

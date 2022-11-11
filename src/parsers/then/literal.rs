@@ -165,6 +165,13 @@ where
     }
 }
 
+impl<A, E, C> CommandArgument<()> for LiteralThenExecutor<A, E, C>
+where
+    A: CommandArgument<()>,
+{
+    fn parse<'a>(&self, input: &'a str) -> IResult<&'a str, (), CommandError<'a>> { self.argument.parse(input) }
+}
+
 impl<A, E, C> IntoMultipleUsage for LiteralThenExecutor<A, E, C>
 where
     LiteralThen<A, E>: IntoMultipleUsage,
