@@ -5,7 +5,7 @@ use nom::IResult;
 
 use super::{ArgumentMarkerDefaultImpl, BuildExecute, BuildPropagate, CommandArgument, Execute, Propagate, TaskLogic, TaskLogicNoArgs};
 use crate::parsers::DefaultExecutor;
-use crate::CommandError;
+use crate::{CmdErrorKind, CommandError};
 
 impl<A, O, C, S> CommandArgument<S, O> for DefaultExecutor<A, O, C, S>
 where
@@ -52,6 +52,9 @@ where
 {
     fn execute<'a>(&self, source: S, input: &'a str) -> IResult<&'a str, U, CommandError<'a>> {
         let (input, result) = self.argument.parse(source, input)?;
+        if !input.is_empty() {
+            return Err(nom::Err::Failure(CommandError::from_external_error(input, ErrorKind::IsNot, CmdErrorKind::NonEmpty)));
+        }
         match self.task.run(source, result) {
             Err(e) => Err(nom::Err::Failure(CommandError::from_external_error(input, ErrorKind::MapRes, e))),
             Ok(v) => Ok((input, v)),
@@ -68,6 +71,9 @@ where
 {
     fn propagate<'a>(&self, source: S, input: &'a str, data: T) -> IResult<&'a str, U, CommandError<'a>> {
         let (input, result) = self.argument.parse(source, input)?;
+        if !input.is_empty() {
+            return Err(nom::Err::Failure(CommandError::from_external_error(input, ErrorKind::IsNot, CmdErrorKind::NonEmpty)));
+        }
         match self.task.run(source, (data, result)) {
             Err(e) => Err(nom::Err::Failure(CommandError::from_external_error(input, ErrorKind::MapRes, e))),
             Ok(v) => Ok((input, v)),

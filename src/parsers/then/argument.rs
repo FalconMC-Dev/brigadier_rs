@@ -7,8 +7,8 @@ use nom::IResult;
 
 use super::ThenWrapper;
 use crate::{
-    prefix, BuildExecute, BuildPropagate, Chain, ChildUsage, CommandArgument, CommandError, Execute, IntoMultipleUsage, MultipleUsage,
-    Prefix, Propagate, TaskLogic, Then,
+    prefix, BuildExecute, BuildPropagate, Chain, ChildUsage, CmdErrorKind, CommandArgument, CommandError, Execute, IntoMultipleUsage,
+    MultipleUsage, Prefix, Propagate, TaskLogic, Then,
 };
 
 /// Default [`Then`] implementation for any argument type.
@@ -143,6 +143,9 @@ where
             },
             |i| {
                 let (input, result) = self.argument.parse(source, i)?;
+                if !input.is_empty() {
+                    return Err(nom::Err::Failure(CommandError::from_external_error(input, ErrorKind::IsNot, CmdErrorKind::NonEmpty)));
+                }
                 match self.task.run(source, result) {
                     Err(e) => Err(nom::Err::Failure(CommandError::from_external_error(input, ErrorKind::MapRes, e))),
                     Ok(v) => Ok((input, v)),
@@ -169,6 +172,9 @@ where
             },
             |i| {
                 let (input, result) = self.argument.parse(source, i)?;
+                if !input.is_empty() {
+                    return Err(nom::Err::Failure(CommandError::from_external_error(input, ErrorKind::IsNot, CmdErrorKind::NonEmpty)));
+                }
                 match self.task.run(source, (data, result)) {
                     Err(e) => Err(nom::Err::Failure(CommandError::from_external_error(input, ErrorKind::MapRes, e))),
                     Ok(v) => Ok((input, v)),

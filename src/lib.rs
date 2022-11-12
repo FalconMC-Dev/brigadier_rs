@@ -24,6 +24,8 @@ impl<S, T, U> CommandParser<S, U> for T where T: Execute<S, U> + HelpUsage {}
 mod tests {
     use std::convert::Infallible;
 
+    use nom::Finish;
+
     use crate::parsers::help::ThenHelp;
     use crate::{boolean, integer_i32, literal, BuildExecute, CommandParser, Execute, Then, UsagePrint};
 
@@ -70,7 +72,22 @@ mod tests {
         println!("{:?}", help);
 
         assert_eq!(("", ()), parser.execute(10, "foo").unwrap());
-        assert_eq!(("", ()), parser.execute(12, "foo -456").unwrap());
+        assert_eq!(
+            "Unknown input: /foo true<--[HERE]",
+            parser
+                .execute(10, "foo true hahah")
+                .finish()
+                .unwrap_err()
+                .convert("/foo true hahah", 10)
+        );
+        assert_eq!(
+            "number too large to fit in target type: ...8945645620<--[HERE]",
+            parser
+                .execute(10, "foo 12345678945645620")
+                .finish()
+                .unwrap_err()
+                .convert("/foo 12345678945645620", 10)
+        );
         assert_eq!(("", ()), parser.execute(12, "foo true").unwrap());
         assert_eq!(("", ()), parser.execute(15, "foo help").unwrap());
     }

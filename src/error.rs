@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use nom::error::{ContextError, ErrorKind, FromExternalError, ParseError};
 
 /// Error returned when parsing a command.
@@ -8,8 +10,8 @@ use nom::error::{ContextError, ErrorKind, FromExternalError, ParseError};
 /// remanining input and a [`CmdErrorKind`].
 #[derive(Debug)]
 pub struct CommandError<'a> {
-    input: &'a str,
-    kind: CmdErrorKind,
+    pub input: &'a str,
+    pub kind: CmdErrorKind,
 }
 
 impl<'a> ParseError<&'a str> for CommandError<'a> {
@@ -57,6 +59,20 @@ pub enum CmdErrorKind {
     Nom(ErrorKind),
     /// Can be returned when parsing number arguments
     OutOfBounds,
+    /// Input is not empty
+    NonEmpty,
+}
+
+impl Display for CmdErrorKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            CmdErrorKind::Char(c) => write!(f, "Expected {}", c),
+            CmdErrorKind::External(e) => write!(f, "{}", e.root_cause()),
+            CmdErrorKind::Nom(e) => write!(f, "Parse error: {}", e.description()),
+            CmdErrorKind::OutOfBounds => write!(f, "Number was out of bounds"),
+            CmdErrorKind::NonEmpty => write!(f, "Unknown input"),
+        }
+    }
 }
 
 impl<E> From<E> for CmdErrorKind
@@ -64,4 +80,26 @@ where
     E: Into<anyhow::Error>,
 {
     fn from(e: E) -> Self { CmdErrorKind::External(e.into()) }
+}
+
+impl<'a> CommandError<'a> {
+    pub fn convert(&self, input: &'a str, context_size: usize) -> String {
+        let input_len = input.chars().count();
+        let error_len = self.input.chars().count();
+        let start = input
+            .chars()
+            .take((input_len - error_len).saturating_sub(context_size))
+            .map(|c| c.len_utf8())
+            .sum::<usize>();
+        let end = input.len() - self.input.len();
+        let input = &input[start..end];
+
+        let prefix = if input_len - error_len > context_size {
+            "..."
+        } else {
+            ""
+        };
+
+        format!("{}: {}{}<--[HERE]", self.kind, prefix, input)
+    }
 }
