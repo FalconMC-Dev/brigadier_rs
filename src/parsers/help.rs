@@ -1,4 +1,5 @@
 use std::borrow::Cow;
+use std::marker::PhantomData;
 
 use nom::branch::alt;
 use nom::bytes::complete::tag_no_case;
@@ -12,35 +13,37 @@ use crate::{BuildExecute, ChildUsage, CommandArgument, CommandError, Execute, In
 ///
 /// This parser produces an iterator over all the different usages the root
 /// parser can parse.
-pub struct HelpArgument<E> {
+pub struct HelpArgument<S, E> {
     pub(crate) argument: E,
     pub(crate) description: &'static str,
+    pub(crate) source: PhantomData<S>,
 }
 
 /// Type that can produce a usage list and help command.
 ///
 /// This should conventionally only be implemented on literal types (types that
 /// implement [`CommandArgument<()>`](crate::CommandArgument)).
-pub trait ThenHelp {
+pub trait ThenHelp<S> {
     /// Attach this parser to a [`HelpArgument`] and a description, the help
     /// name will be the usage returned by the root parser.
-    fn help(self, description: &'static str) -> HelpArgument<Self>
+    fn help(self, description: &'static str) -> HelpArgument<S, Self>
     where
         Self: Sized,
     {
         HelpArgument {
             argument: self,
             description,
+            source: PhantomData,
         }
     }
 }
 
-impl<E> CommandArgument<UsagePrint<E::Item>> for HelpArgument<E>
+impl<S, E> CommandArgument<S, UsagePrint<E::Item>> for HelpArgument<S, E>
 where
-    E: CommandArgument<()> + IntoMultipleUsage,
+    E: CommandArgument<S, ()> + IntoMultipleUsage,
 {
-    fn parse<'a>(&self, input: &'a str) -> nom::IResult<&'a str, UsagePrint<E::Item>, crate::CommandError<'a>> {
-        let (input, _) = self.argument.parse(input)?;
+    fn parse<'a>(&self, source: S, input: &'a str) -> nom::IResult<&'a str, UsagePrint<E::Item>, crate::CommandError<'a>> {
+        let (input, _) = self.argument.parse(source, input)?;
         let (input, _) = char(' ')(input)?;
         let (input, _) = tag_no_case("help")(input)?;
         Ok((input, UsagePrint {
@@ -49,44 +52,45 @@ where
     }
 }
 
-impl<E, C> BuildExecute<C, HelpExecutor<E, C>> for HelpArgument<E>
+impl<S, E, C> BuildExecute<C, HelpExecutor<S, E, C>> for HelpArgument<S, E>
 where
     E: IntoMultipleUsage,
-    C: TaskLogic<UsagePrint<E::Item>>,
+    C: TaskLogic<S, UsagePrint<E::Item>>,
 {
-    fn build_exec(self, task: C) -> HelpExecutor<E, C> { HelpExecutor { help: self, task } }
+    fn build_exec(self, task: C) -> HelpExecutor<S, E, C> { HelpExecutor { help: self, task } }
 }
 
-impl<E, U> Execute<U> for HelpArgument<E>
+impl<E, S, U> Execute<S, U> for HelpArgument<S, E>
 where
-    E: Execute<U>,
+    E: Execute<S, U>,
 {
-    fn execute<'a>(&self, input: &'a str) -> nom::IResult<&'a str, U, CommandError<'a>> { self.argument.execute(input) }
+    fn execute<'a>(&self, source: S, input: &'a str) -> nom::IResult<&'a str, U, CommandError<'a>> { self.argument.execute(source, input) }
 }
 
 /// Executor for a custom help message.
 ///
 /// Similar to [`DefaultExecutor`](crate::parsers::DefaultExecutor).
-pub struct HelpExecutor<E, C> {
-    pub(crate) help: HelpArgument<E>,
+pub struct HelpExecutor<S, E, C> {
+    pub(crate) help: HelpArgument<S, E>,
     pub(crate) task: C,
 }
 
-impl<E, C, U> Execute<U> for HelpExecutor<E, C>
+impl<E, C, U, S> Execute<S, U> for HelpExecutor<S, E, C>
 where
-    E: Execute<U> + CommandArgument<()> + IntoMultipleUsage,
-    C: TaskLogic<UsagePrint<E::Item>, Output = U>,
+    E: Execute<S, U> + CommandArgument<S, ()> + IntoMultipleUsage,
+    C: TaskLogic<S, UsagePrint<E::Item>, Output = U>,
+    S: Copy,
 {
-    fn execute<'a>(&self, input: &'a str) -> nom::IResult<&'a str, U, crate::CommandError<'a>> {
+    fn execute<'a>(&self, source: S, input: &'a str) -> nom::IResult<&'a str, U, crate::CommandError<'a>> {
         alt((
             |i| {
-                let (input, usage) = self.help.parse(i)?;
-                match self.task.run(usage) {
+                let (input, usage) = self.help.parse(source, i)?;
+                match self.task.run(source, usage) {
                     Err(e) => Err(nom::Err::Failure(CommandError::from_external_error(input, ErrorKind::MapRes, e))),
                     Ok(v) => Ok((input, v)),
                 }
             },
-            |i| self.help.argument.execute(i),
+            |i| self.help.argument.execute(source, i),
         ))(input)
     }
 }
@@ -107,7 +111,7 @@ pub trait HelpUsage {
     fn help(&self) -> HelpEntry;
 }
 
-impl<E> HelpUsage for HelpArgument<E>
+impl<S, E> HelpUsage for HelpArgument<S, E>
 where
     E: ChildUsage<Child = &'static str>,
 {
@@ -119,7 +123,7 @@ where
     }
 }
 
-impl<E, C> HelpUsage for HelpExecutor<E, C>
+impl<S, E, C> HelpUsage for HelpExecutor<S, E, C>
 where
     E: ChildUsage<Child = &'static str>,
 {
@@ -131,8 +135,8 @@ where
     }
 }
 
-impl<A, C> ThenHelp for LiteralExecutor<A, C> {}
+impl<A, C, S> ThenHelp<S> for LiteralExecutor<A, C, S> {}
 
-impl<A, E, C> ThenHelp for LiteralThenExecutor<A, E, C> {}
+impl<A, E, C, S> ThenHelp<S> for LiteralThenExecutor<A, E, C, S> {}
 
-impl<A, E> ThenHelp for LiteralThen<A, E> {}
+impl<A, E, S> ThenHelp<S> for LiteralThen<A, E, S> {}

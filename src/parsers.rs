@@ -25,13 +25,14 @@ use crate::{ChildUsage, IntoMultipleUsage};
 /// Default executor for command argument parsers.
 ///
 /// This type implements `Execute` and `Propagate`.
-pub struct DefaultExecutor<A, C, O> {
+pub struct DefaultExecutor<A, C, O, S> {
     pub(crate) argument: A,
     pub(crate) task: C,
     pub(crate) output: PhantomData<O>,
+    pub(crate) source: PhantomData<S>,
 }
 
-impl<A, C, O> IntoMultipleUsage for DefaultExecutor<A, C, O>
+impl<S, A, C, O> IntoMultipleUsage for DefaultExecutor<A, C, O, S>
 where
     A: IntoMultipleUsage,
 {
@@ -40,7 +41,7 @@ where
     fn usage_gen(&self) -> Self::Item { self.argument.usage_gen() }
 }
 
-impl<A, C, O> ChildUsage for DefaultExecutor<A, C, O>
+impl<S, A, C, O> ChildUsage for DefaultExecutor<A, C, O, S>
 where
     A: ChildUsage,
 {

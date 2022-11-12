@@ -16,9 +16,9 @@ pub use usage::*;
 /// Parser trait combination of `Execute` and `HelpUsage`.
 ///
 /// This is the result of combining one or more parsers.
-pub trait CommandParser<U>: Execute<U> + HelpUsage {}
+pub trait CommandParser<S, U>: Execute<S, U> + HelpUsage + Send + Sync {}
 
-impl<T, U> CommandParser<U> for T where T: Execute<U> + HelpUsage {}
+impl<S, T, U> CommandParser<S, U> for T where T: Execute<S, U> + HelpUsage + Send + Sync {}
 
 #[cfg(test)]
 mod tests {
@@ -30,34 +30,34 @@ mod tests {
     #[test]
     fn test_main() {
         let parser = literal("foo")
-            .then(integer_i32("bar").max(10).build_exec(|i| {
+            .then(integer_i32("bar").max(10).build_exec(|_, i| {
                 println!("Found integer {}", i);
                 Ok::<(), Infallible>(())
             }))
-            .build_exec(|| {
+            .build_exec(|_| {
                 println!("Didn't wanna give us a value aye?");
                 Ok::<(), Infallible>(())
             });
 
-        assert!(parser.execute("foo 13").is_err());
-        assert_eq!(("", ()), parser.execute("foo").unwrap());
+        assert!(parser.execute((), "foo 13").is_err());
+        assert_eq!(("", ()), parser.execute((), "foo").unwrap());
     }
 
     #[test]
     fn test_usage() {
-        let parser: Box<dyn CommandParser<()>> = Box::new(
+        let parser: Box<dyn CommandParser<i32, ()>> = Box::new(
             literal("foo")
-                .then(integer_i32("bar").max(10).build_exec(|i| {
-                    println!("Found integer {}", i);
+                .then(integer_i32("bar").max(10).build_exec(|x, i| {
+                    println!("Found integer {} for source {}", i, x);
                     Ok::<(), Infallible>(())
                 }))
-                .then(boolean("buzz").build_exec(|_| Ok::<(), Infallible>(())))
-                .build_exec(|| {
+                .then(boolean("buzz").build_exec(|_, _| Ok::<(), Infallible>(())))
+                .build_exec(|_| {
                     println!("Didn't wanna give us a value aye?");
                     Ok::<(), Infallible>(())
                 })
                 .help("Test description")
-                .build_exec(|mut usages: UsagePrint<_>| {
+                .build_exec(|_, mut usages: UsagePrint<_>| {
                     assert_eq!("foo", usages.next().unwrap().unwrap());
                     assert_eq!("foo <bar>", usages.next().unwrap().unwrap());
                     assert_eq!("foo <buzz>", usages.next().unwrap().unwrap());
@@ -69,8 +69,9 @@ mod tests {
         let help = parser.help();
         println!("{:?}", help);
 
-        assert_eq!(("", ()), parser.execute("foo").unwrap());
-        assert_eq!(("", ()), parser.execute("foo true").unwrap());
-        assert_eq!(("", ()), parser.execute("foo help").unwrap());
+        assert_eq!(("", ()), parser.execute(10, "foo").unwrap());
+        assert_eq!(("", ()), parser.execute(12, "foo -456").unwrap());
+        assert_eq!(("", ()), parser.execute(12, "foo true").unwrap());
+        assert_eq!(("", ()), parser.execute(15, "foo help").unwrap());
     }
 }

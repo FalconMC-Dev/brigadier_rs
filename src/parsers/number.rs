@@ -16,14 +16,15 @@ use crate::{ArgumentMarkerDefaultImpl, ChildUsage, CommandArgument, CommandError
 ///
 /// This type can be bounded between a minimum and maximum value (standard MIN
 /// and MAX of type `N`). A parse method for type `N` must be provided also.
-pub struct NumberArgument<N> {
+pub struct NumberArgument<N, S> {
     pub(crate) name: &'static str,
     pub(crate) min: N,
     pub(crate) max: N,
     pub(crate) parse: fn(&str) -> IResult<&str, N, CommandError>,
+    pub(crate) source: PhantomData<S>,
 }
 
-impl<N> NumberArgument<N>
+impl<N, S> NumberArgument<N, S>
 where
     N: PartialOrd,
 {
@@ -42,13 +43,13 @@ where
     }
 }
 
-impl<N> CommandArgument<N> for NumberArgument<N>
+impl<S, N> CommandArgument<S, N> for NumberArgument<N, S>
 where
     N: PartialOrd,
 {
     /// This implementation may return a [`Failure`](nom::Err::Failure) when the
     /// parsed number is outside of the bounds.
-    fn parse<'a>(&self, input: &'a str) -> nom::IResult<&'a str, N, CommandError<'a>> {
+    fn parse<'a>(&self, _source: S, input: &'a str) -> nom::IResult<&'a str, N, CommandError<'a>> {
         let (input, out) = (self.parse)(input)?;
         if out > self.max || out < self.min {
             Err(nom::Err::Failure(CommandError::from_external_error(input, ErrorKind::MapRes, CmdErrorKind::OutOfBounds)))
@@ -58,31 +59,32 @@ where
     }
 }
 
-impl<E, N> Then<E> for NumberArgument<N> {
-    type Output = CommandThen<Self, E, N>;
+impl<E, N, S> Then<E> for NumberArgument<N, S> {
+    type Output = CommandThen<Self, E, N, S>;
 
     fn then(self, executor: E) -> Self::Output {
         CommandThen {
             argument: self,
             executor,
             output: PhantomData,
+            source: PhantomData,
         }
     }
 }
 
-impl<N> IntoMultipleUsage for NumberArgument<N> {
+impl<N, S> IntoMultipleUsage for NumberArgument<N, S> {
     type Item = <[&'static str; 3] as IntoMultipleUsage>::Item;
 
     fn usage_gen(&self) -> Self::Item { self.usage_child().usage_gen() }
 }
 
-impl<N> ChildUsage for NumberArgument<N> {
+impl<N, S> ChildUsage for NumberArgument<N, S> {
     type Child = [&'static str; 3];
 
     fn usage_child(&self) -> Self::Child { ["<", self.name, ">"] }
 }
 
-impl<N> ArgumentMarkerDefaultImpl for NumberArgument<N> {}
+impl<N, S> ArgumentMarkerDefaultImpl for NumberArgument<N, S> {}
 
 fn decimal(input: &str) -> IResult<&str, &str, CommandError> {
     recognize(preceded(opt(tag("-")), many1(terminated(one_of("0123456789"), many0(char('_'))))))(input)
@@ -105,12 +107,13 @@ macro_rules! impl_num {
     };
     ($num:ty => $name:ident = $parse:ident + $num_parse:ident) => {
         #[doc = stringify!(Create a $num argument parser.)]
-        pub fn $name(name: &'static str) -> NumberArgument<$num> {
+        pub fn $name<S>(name: &'static str) -> NumberArgument<$num, S> {
             NumberArgument {
                 name,
                 min: <$num>::MIN,
                 max: <$num>::MAX,
                 parse: $parse,
+                source: PhantomData,
             }
         }
 

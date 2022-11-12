@@ -7,88 +7,92 @@ use super::{ArgumentMarkerDefaultImpl, BuildExecute, BuildPropagate, CommandArgu
 use crate::parsers::DefaultExecutor;
 use crate::CommandError;
 
-impl<A, O, C> CommandArgument<O> for DefaultExecutor<A, O, C>
+impl<A, O, C, S> CommandArgument<S, O> for DefaultExecutor<A, O, C, S>
 where
-    A: CommandArgument<O>,
+    A: CommandArgument<S, O>,
 {
-    fn parse<'a>(&self, input: &'a str) -> IResult<&'a str, O, CommandError<'a>> { self.argument.parse(input) }
+    fn parse<'a>(&self, source: S, input: &'a str) -> IResult<&'a str, O, CommandError<'a>> { self.argument.parse(source, input) }
 }
 
-impl<A, O, C> BuildExecute<C, DefaultExecutor<A, C, O>> for A
+impl<S, A, O, C> BuildExecute<C, DefaultExecutor<A, C, O, S>> for A
 where
-    A: ArgumentMarkerDefaultImpl + CommandArgument<O>,
-    C: TaskLogic<O>,
+    A: ArgumentMarkerDefaultImpl + CommandArgument<S, O>,
+    C: TaskLogic<S, O>,
 {
-    fn build_exec(self, task: C) -> DefaultExecutor<A, C, O> {
+    fn build_exec(self, task: C) -> DefaultExecutor<A, C, O, S> {
         DefaultExecutor {
             argument: self,
             task,
             output: PhantomData,
+            source: PhantomData,
         }
     }
 }
 
-impl<A, O, C, T> BuildPropagate<C, T, DefaultExecutor<A, C, O>> for A
+impl<S, A, O, C, T> BuildPropagate<C, T, DefaultExecutor<A, C, O, S>> for A
 where
-    A: ArgumentMarkerDefaultImpl + CommandArgument<O>,
-    C: TaskLogic<(T, O)>,
+    A: ArgumentMarkerDefaultImpl + CommandArgument<S, O>,
+    C: TaskLogic<S, (T, O)>,
 {
-    fn build_propagate(self, task: C) -> DefaultExecutor<A, C, O> {
+    fn build_propagate(self, task: C) -> DefaultExecutor<A, C, O, S> {
         DefaultExecutor {
             argument: self,
             task,
             output: PhantomData,
+            source: PhantomData,
         }
     }
 }
 
-impl<A, O, C, U> Execute<U> for DefaultExecutor<A, C, O>
+impl<A, O, C, U, S> Execute<S, U> for DefaultExecutor<A, C, O, S>
 where
-    A: CommandArgument<O>,
-    C: TaskLogic<O, Output = U>,
+    A: CommandArgument<S, O>,
+    C: TaskLogic<S, O, Output = U>,
+    S: Copy,
 {
-    fn execute<'a>(&self, input: &'a str) -> IResult<&'a str, U, CommandError<'a>> {
-        let (input, result) = self.argument.parse(input)?;
-        match self.task.run(result) {
+    fn execute<'a>(&self, source: S, input: &'a str) -> IResult<&'a str, U, CommandError<'a>> {
+        let (input, result) = self.argument.parse(source, input)?;
+        match self.task.run(source, result) {
             Err(e) => Err(nom::Err::Failure(CommandError::from_external_error(input, ErrorKind::MapRes, e))),
             Ok(v) => Ok((input, v)),
         }
     }
 }
 
-impl<A, O, C, T, U> Propagate<T, U> for DefaultExecutor<A, C, O>
+impl<A, O, C, T, U, S> Propagate<S, T, U> for DefaultExecutor<A, C, O, S>
 where
     T: Copy,
-    A: CommandArgument<O>,
-    C: TaskLogic<(T, O), Output = U>,
+    S: Copy,
+    A: CommandArgument<S, O>,
+    C: TaskLogic<S, (T, O), Output = U>,
 {
-    fn propagate<'a>(&self, input: &'a str, data: T) -> IResult<&'a str, U, CommandError<'a>> {
-        let (input, result) = self.argument.parse(input)?;
-        match self.task.run((data, result)) {
+    fn propagate<'a>(&self, source: S, input: &'a str, data: T) -> IResult<&'a str, U, CommandError<'a>> {
+        let (input, result) = self.argument.parse(source, input)?;
+        match self.task.run(source, (data, result)) {
             Err(e) => Err(nom::Err::Failure(CommandError::from_external_error(input, ErrorKind::MapRes, e))),
             Ok(v) => Ok((input, v)),
         }
     }
 }
 
-impl<E, F, O, U> TaskLogic<O> for F
+impl<E, F, S, O, U> TaskLogic<S, O> for F
 where
-    F: Fn(O) -> Result<U, E>,
+    F: Fn(S, O) -> Result<U, E>,
     E: Into<anyhow::Error>,
 {
     type Error = E;
     type Output = U;
 
-    fn run(&self, args: O) -> Result<U, E> { self(args) }
+    fn run(&self, source: S, args: O) -> Result<U, E> { self(source, args) }
 }
 
-impl<E, F, U> TaskLogicNoArgs for F
+impl<E, F, U, S> TaskLogicNoArgs<S> for F
 where
-    F: Fn() -> Result<U, E>,
+    F: Fn(S) -> Result<U, E>,
     E: Into<anyhow::Error>,
 {
     type Error = E;
     type Output = U;
 
-    fn run(&self) -> Result<U, Self::Error> { self() }
+    fn run(&self, source: S) -> Result<U, Self::Error> { self(source) }
 }
