@@ -20,8 +20,8 @@ mod argument_impl;
 ///
 /// pub struct BoolArgument;
 ///
-/// impl CommandArgument<bool> for BoolArgument {
-///     fn parse<'a>(&self, input: &'a str) -> IResult<&'a str, bool, CommandError<'a>> {
+/// impl CommandArgument<(), bool> for BoolArgument {
+///     fn parse<'a>(&self, source: (), input: &'a str) -> IResult<&'a str, bool, CommandError<'a>> {
 ///         alt((
 ///             |i| {
 ///                 let (i, _) = tag_no_case("true")(i)?;
@@ -48,9 +48,9 @@ pub trait CommandArgument<S, A> {
     /// ```rust
     /// # use brigadier_rs::CommandArgument;
     /// # use brigadier_rs::literal;
-    /// let parser = literal("foo"); // new literal argument parser
+    /// let parser = literal::<()>("foo"); // new literal argument parser
     ///
-    /// assert_eq!(("", ()), parser.parse("foo").unwrap()); // `LiteralArgument` implements `CommandArgument<()>`
+    /// assert_eq!(("", ()), parser.parse((), "foo").unwrap()); // `LiteralArgument` implements `CommandArgument<()>`
     /// ```
     fn parse<'a>(&self, source: S, input: &'a str) -> IResult<&'a str, A, CommandError<'a>>;
 }
