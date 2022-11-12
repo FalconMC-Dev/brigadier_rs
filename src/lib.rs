@@ -16,9 +16,9 @@ pub use usage::*;
 /// Parser trait combination of `Execute` and `HelpUsage`.
 ///
 /// This is the result of combining one or more parsers.
-pub trait CommandParser<S, U>: Execute<S, U> + HelpUsage + Send + Sync {}
+pub trait CommandParser<S, U>: Execute<S, U> + HelpUsage {}
 
-impl<S, T, U> CommandParser<S, U> for T where T: Execute<S, U> + HelpUsage + Send + Sync {}
+impl<S, T, U> CommandParser<S, U> for T where T: Execute<S, U> + HelpUsage {}
 
 #[cfg(test)]
 mod tests {
