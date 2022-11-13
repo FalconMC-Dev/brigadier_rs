@@ -20,8 +20,8 @@ mod argument_impl;
 ///
 /// pub struct BoolArgument;
 ///
-/// impl CommandArgument<bool> for BoolArgument {
-///     fn parse<'a>(&self, input: &'a str) -> IResult<&'a str, bool, CommandError<'a>> {
+/// impl CommandArgument<(), bool> for BoolArgument {
+///     fn parse<'a>(&self, source: (), input: &'a str) -> IResult<&'a str, bool, CommandError<'a>> {
 ///         alt((
 ///             |i| {
 ///                 let (i, _) = tag_no_case("true")(i)?;
@@ -35,7 +35,7 @@ mod argument_impl;
 ///     }
 /// }
 /// ```
-pub trait CommandArgument<A> {
+pub trait CommandArgument<S, A> {
     /// Where the magic happens! This is what ends up extracting type `A` from
     /// the raw string input.
     ///
@@ -48,11 +48,11 @@ pub trait CommandArgument<A> {
     /// ```rust
     /// # use brigadier_rs::CommandArgument;
     /// # use brigadier_rs::literal;
-    /// let parser = literal("foo"); // new literal argument parser
+    /// let parser = literal::<()>("foo"); // new literal argument parser
     ///
-    /// assert_eq!(("", ()), parser.parse("foo").unwrap()); // `LiteralArgument` implements `CommandArgument<()>`
+    /// assert_eq!(("", ()), parser.parse((), "foo").unwrap()); // `LiteralArgument` implements `CommandArgument<()>`
     /// ```
-    fn parse<'a>(&self, input: &'a str) -> IResult<&'a str, A, CommandError<'a>>;
+    fn parse<'a>(&self, source: S, input: &'a str) -> IResult<&'a str, A, CommandError<'a>>;
 }
 
 /// Chaining extension trait for argument type parsers ([`CommandArgument`]).
@@ -121,35 +121,41 @@ pub trait ArgumentMarkerDefaultImpl {}
 
 /// Command logic definition trait (without arguments).
 ///
-/// Executes command logic. The return type (`bool`) is not finalized yet.
+/// Executes command logic.
 ///
 /// `Fn`-closures implement this trait.
-pub trait TaskLogicNoArgs {
+pub trait TaskLogicNoArgs<S> {
+    /// Error type this logic may return
     type Error: Into<anyhow::Error>;
+    /// Return value upon success
+    type Output;
 
-    fn run(&self) -> Result<bool, Self::Error>;
+    fn run(&self, source: S) -> Result<Self::Output, Self::Error>;
 }
 
 /// Command logic definition trait (with arguments).
 ///
-/// Executes command logic. The return type (`bool`) is not finalized yet.
-/// This type receives propagated arguments from parsers upstream.
+/// Executes command logic. This type receives propagated arguments from parsers
+/// upstream.
 ///
 /// `Fn`-closures implement this trait.
-pub trait TaskLogic<O> {
+pub trait TaskLogic<S, O> {
+    /// Error type this logic may return
     type Error: Into<anyhow::Error>;
+    /// Return value upon success
+    type Output;
 
-    fn run(&self, args: O) -> Result<bool, Self::Error>;
+    fn run(&self, source: S, args: O) -> Result<Self::Output, Self::Error>;
 }
 
 /// Command parser execution entrypoint.
-pub trait Execute {
-    fn execute<'a>(&self, input: &'a str) -> IResult<&'a str, bool, CommandError<'a>>;
+pub trait Execute<S, U> {
+    fn execute<'a>(&self, source: S, input: &'a str) -> IResult<&'a str, U, CommandError<'a>>;
 }
 
 /// Command parser propagation entrypoint.
 ///
 /// Generally not used by the end user.
-pub trait Propagate<T> {
-    fn propagate<'a>(&self, input: &'a str, data: T) -> IResult<&'a str, bool, CommandError<'a>>;
+pub trait Propagate<S, T, U> {
+    fn propagate<'a>(&self, source: S, input: &'a str, data: T) -> IResult<&'a str, U, CommandError<'a>>;
 }
