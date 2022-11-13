@@ -1,13 +1,14 @@
 # brigadier-rs
 
-[![Latest Version](https://img.shields.io/crates/v/brigadier_rs)](https://crates.io/crates/brigadier_rs)
+[![Latest Version](https://img.shields.io/crates/v/brigadier_rs?style=for-the-badge)](https://crates.io/crates/brigadier_rs)
+[![Docs.rs](https://img.shields.io/docsrs/brigadier_rs?style=for-the-badge)](https://docs.rs/brigadier_rs/latest/brigadier_rs/)
 
 This crate is a parsing library for Minecraft commands inspired
 by [Mojang's brigadier](https://github.com/Mojang/Brigadier). It was developed
 for use with [`FalconMC`](https://github.com/FalconMC-Dev/FalconMC) but can
 be used fully indepedently (hence the name).
 
-## Usage
+## Features
 
 Unlike Mojang's Brigadier, this library does *not* make use of nodes internally.
 Instead, all command parsers are strong-typed and consist of chained types. This
@@ -70,6 +71,7 @@ however is provided so dependents can pass data to the closures after parsing.
 
 A `HelpArgument` is provided to easily integrate a command into a help system.
 This is done by calling `help()` on a command parser like this:
+
 ```rust
 let parser = literal("foo")
     .then(
